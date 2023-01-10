@@ -1,7 +1,3 @@
-create schema Loeysingsregister;
-
-set search_path to Loeysingsregister;
-
 create table Verksemd
 (
     id                     serial primary key,
