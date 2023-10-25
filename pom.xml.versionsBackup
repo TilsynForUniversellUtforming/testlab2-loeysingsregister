@@ -15,8 +15,8 @@
     <description>testlab2loeysingsregister</description>
     <properties>
         <java.version>17</java.version>
-        <kotlin.version>1.8.0</kotlin.version>
-        <spotless.version>2.40.0</spotless.version>
+        <kotlin.version>1.7.22</kotlin.version>
+        <spotless.version>2.29.0</spotless.version>
         <docker.image.prefix>acrddtprod.azurecr.io</docker.image.prefix>
     </properties>
     <dependencies>
@@ -54,12 +54,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-devtools</artifactId>
-            <optional>true</optional>
         </dependency>
     </dependencies>
 
