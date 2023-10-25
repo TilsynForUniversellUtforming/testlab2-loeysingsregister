@@ -19,14 +19,11 @@ class LoeysingResource(val loeysingDAO: LoeysingDAO) {
             val url = validateURL(external.url).getOrThrow()
             val orgnummer = validateOrgNummer(external.orgnummer).getOrThrow()
 
-            val foundLoeysing = loeysingDAO.findLoeysingByURLAndOrgnummer(url, orgnummer)
-            if (foundLoeysing != null) {
-              logger.error("Løysing med url $url og orgnr $orgnummer er duplikat")
-              throw IllegalArgumentException(
-                  "Løysing med url $url og orgnr $orgnummer finnes allereie")
-            }
-
-            loeysingDAO.createLoeysing(namn, url, orgnummer)
+            val existingLoeysing = loeysingDAO.findLoeysingByURLAndOrgnummer(url, orgnummer)
+            existingLoeysing?.id
+                ?: loeysingDAO.createLoeysing(namn, url, orgnummer).also {
+                  logger.info("lagra ny løysing ($url, $orgnummer)")
+                }
           }
           .fold(
               { id ->
