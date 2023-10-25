@@ -96,7 +96,7 @@
                 <configuration>
                     <to>
                         <!--suppress UnresolvedMavenProperty -->
-                        <image>${docker.image.prefix}/testlab2-loeysingreg:${git.commit.id}</image>
+                        <image>${docker.image.prefix}/testlab2-loeysingsregister:${git.commit.id}</image>
                         <tags>latest</tags>
                     </to>
                     <container>

@@ -23,3 +23,5 @@
 hs_err_pid*
 /target/
 /.idea/
+testlab2loeysingsregister.iml
+src/main/resources/dev.properties
