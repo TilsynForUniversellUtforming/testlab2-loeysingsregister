@@ -20,12 +20,18 @@ fun validateOrgNummer(s: String?): Result<String> = runCatching {
   }
 }
 
+fun validateId(s: String?): Result<Int> = runCatching {
+  require(!s.isNullOrBlank()) { "mangler id" }
+  s.toInt()
+}
+
 fun validateNamn(s: String?): Result<String> = runCatching {
   require(!(s == null || s == "")) { "mangler navn" }
   s
 }
 
-fun validateURL(s: String): Result<URL> = runCatching {
+fun validateURL(s: String?): Result<URL> = runCatching {
+  require(!s.isNullOrBlank()) { "mangler url" }
   val withProtocol =
       if (s.startsWith("http://") || s.startsWith("https://")) {
         s

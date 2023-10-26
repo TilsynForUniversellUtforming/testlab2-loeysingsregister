@@ -1,27 +1,29 @@
 package no.uutilsynet.testlab2loeysingsregister
 
 import java.net.URI
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
-fun locationForId(id: Int): URI = URI("/v2/loeysing/${id}")
+fun locationForId(id: Int): URI = URI("/v1/loeysing/${id}")
 
 @RestController
-@RequestMapping("v2/loeysing")
+@RequestMapping("v1/loeysing")
 class LoeysingResource(val loeysingDAO: LoeysingDAO) {
-  val logger = LoggerFactory.getLogger(LoeysingResource::class.java)
+  val logger: Logger = LoggerFactory.getLogger(LoeysingResource::class.java)
 
   @PostMapping
-  fun createLoeysing(@RequestBody external: Loeysing.External) =
+  fun createLoeysing(@RequestBody body: Map<String, String>) =
       runCatching {
-            val namn = validateNamn(external.namn).getOrThrow()
-            val url = validateURL(external.url).getOrThrow()
-            val orgnummer = validateOrgNummer(external.orgnummer).getOrThrow()
+            val id = validateId(body["id"]).getOrThrow()
+            val namn = validateNamn(body["namn"]).getOrThrow()
+            val url = validateURL(body["url"]).getOrThrow()
+            val orgnummer = validateOrgNummer(body["orgnummer"]).getOrThrow()
 
             val existingLoeysing = loeysingDAO.findLoeysingByURLAndOrgnummer(url, orgnummer)
             existingLoeysing?.id
-                ?: loeysingDAO.createLoeysing(namn, url, orgnummer).also {
+                ?: loeysingDAO.createLoeysing(namn, url, orgnummer, id).also {
                   logger.info("lagra ny løysing ($url, $orgnummer)")
                 }
           }
