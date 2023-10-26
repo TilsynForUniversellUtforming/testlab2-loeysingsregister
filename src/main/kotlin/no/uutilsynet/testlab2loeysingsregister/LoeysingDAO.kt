@@ -1,8 +1,6 @@
 package no.uutilsynet.testlab2loeysingsregister
 
 import java.net.URL
-import no.uutilsynet.testlab2loeysingsregister.LoeysingDAO.LoeysingParams.createLoeysingParams
-import no.uutilsynet.testlab2loeysingsregister.LoeysingDAO.LoeysingParams.createLoeysingSql
 import no.uutilsynet.testlab2loeysingsregister.LoeysingDAO.LoeysingParams.getLoeysingListSql
 import no.uutilsynet.testlab2loeysingsregister.LoeysingDAO.LoeysingParams.getLoeysingSql
 import no.uutilsynet.testlab2loeysingsregister.LoeysingDAO.LoeysingParams.loeysingRowMapper
@@ -16,12 +14,6 @@ import org.springframework.transaction.annotation.Transactional
 class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
 
   object LoeysingParams {
-    val createLoeysingSql =
-        "insert into loeysing (namn, url, orgnummer) values (:namn, :url, :orgnummer) returning id"
-
-    fun createLoeysingParams(namn: String, url: URL, orgnummer: String?) =
-        mapOf("namn" to namn, "url" to url.toString(), "orgnummer" to orgnummer)
-
     val getLoeysingListSql = "select id, namn, url, orgnummer from loeysing order by id"
     val getLoeysingSql = "select id, namn, url, orgnummer from loeysing where id = :id order by id"
 
@@ -35,9 +27,18 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
   fun getLoeysingList(): List<Loeysing> = jdbcTemplate.query(getLoeysingListSql, loeysingRowMapper)
 
   @Transactional
-  fun createLoeysing(namn: String, url: URL, orgnummer: String?): Int =
-      jdbcTemplate.queryForObject(
-          createLoeysingSql, createLoeysingParams(namn, url, orgnummer), Int::class.java)!!
+  fun createLoeysing(namn: String, url: URL, orgnummer: String, id: Int? = null): Int =
+      if (id != null) {
+        jdbcTemplate.queryForObject(
+            "insert into loeysing (id, namn, url, orgnummer) values (:id, :namn, :url, :orgnummer) returning id",
+            mapOf("id" to id, "namn" to namn, "url" to url.toString(), "orgnummer" to orgnummer),
+            Int::class.java)!!
+      } else {
+        jdbcTemplate.queryForObject(
+            "insert into loeysing (namn, url, orgnummer) values (:namn, :url, :orgnummer) returning id",
+            mapOf("namn" to namn, "url" to url.toString(), "orgnummer" to orgnummer),
+            Int::class.java)!!
+      }
 
   fun findLoeysingByURLAndOrgnummer(url: URL, orgnummer: String): Loeysing? {
     val sammeOrgnummer =
