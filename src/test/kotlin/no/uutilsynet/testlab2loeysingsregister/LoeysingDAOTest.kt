@@ -17,10 +17,12 @@ class LoeysingDAOTest(
   val loeysingTestUrl = "https://www.example.com/"
   val loeysingTestOrgNummer = "000000000"
 
+  val namesToBeDeleted = mutableListOf(loeysingTestName)
+
   @AfterAll
   fun cleanup() {
     loeysingDAO.jdbcTemplate.update(
-        "delete from loeysing where namn = :namn", mapOf("namn" to loeysingTestName))
+        "delete from loeysing where namn in (:names)", mapOf("names" to namesToBeDeleted))
   }
 
   @Test
@@ -37,7 +39,8 @@ class LoeysingDAOTest(
   @DisplayName("Skal hente løsningliste fra DAO")
   fun getLoeysingList() {
     val id = createLoeysing()
-    val loeysing = loeysingDAO.getLoeysing(id)
+    val loeysing = loeysingDAO.getLoeysing(id)!!
+
     val list = loeysingDAO.getLoeysingList()
 
     assertThat(list).contains(loeysing)
@@ -55,16 +58,40 @@ class LoeysingDAOTest(
   @DisplayName(
       "når det finnes to løysingar i databasen, så skal vi kunne hente en eller begge med getLoeysingList")
   fun getLoeysingListTest() {
-    val id1 = createLoeysing()
-    val id2 = createLoeysing(url = "https://www.nrk.no/")
+    val namn1 = UUID.randomUUID().toString().also { namesToBeDeleted += it }
+    val namn2 = UUID.randomUUID().toString().also { namesToBeDeleted += it }
+    val id1 = createLoeysing(name = namn1)
+    val id2 = createLoeysing(name = namn2)
 
     val result1 = loeysingDAO.getLoeysingList(listOf(id1))
     val result2 = loeysingDAO.getLoeysingList(listOf(id1, id2))
 
     assertThat(result1.map(Loeysing::id)).containsExactly(id1)
+    assertThat(result1.map(Loeysing::namn)).containsExactly(namn1)
     assertThat(result2.map(Loeysing::id)).containsExactly(id1, id2)
+    assertThat(result2.map(Loeysing::namn)).containsExactly(namn1, namn2)
   }
 
-  private fun createLoeysing(name: String = loeysingTestName, url: String = loeysingTestUrl) =
-      loeysingDAO.createLoeysing(name, URI(url).toURL(), loeysingTestOrgNummer)
+  @Test
+  @DisplayName(
+      "når det finnes ei løysing i databasen, og vi oppdaterer den, så skal vi få den oppdaterte versjonen når vi leser den ut igjen")
+  fun oppdaterLoeysing() {
+    val id = createLoeysing()
+    val loeysing = loeysingDAO.getLoeysing(id)!!
+    val nyttNamn = UUID.randomUUID().toString().also { namesToBeDeleted += it }
+    val updated = loeysing.copy(namn = nyttNamn)
+
+    loeysingDAO.update(updated)
+    val readUpdated = loeysingDAO.getLoeysing(id)!!
+
+    assertThat(readUpdated.namn).isEqualTo(nyttNamn)
+  }
+
+  /** Lager ei ny løysing med ei oppdatering. */
+  private fun createLoeysing(name: String = loeysingTestName, url: String = loeysingTestUrl): Int {
+    val id = loeysingDAO.createLoeysing("to be updated", URI(url).toURL(), loeysingTestOrgNummer)
+    val loeysing = loeysingDAO.getLoeysing(id)!!
+    loeysingDAO.update(loeysing.copy(namn = name))
+    return id
+  }
 }
