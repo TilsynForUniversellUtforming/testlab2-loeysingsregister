@@ -17,12 +17,12 @@ class LoeysingDAOTest(
   val loeysingTestUrl = "https://www.example.com/"
   val loeysingTestOrgNummer = "000000000"
 
-  val namesToBeDeleted = mutableListOf(loeysingTestName)
+  val idsToBeDeleted = mutableListOf<Int>()
 
   @AfterAll
   fun cleanup() {
     loeysingDAO.jdbcTemplate.update(
-        "delete from loeysing where namn in (:names)", mapOf("names" to namesToBeDeleted))
+        "delete from loeysing where original in (:ids)", mapOf("ids" to idsToBeDeleted))
   }
 
   @Test
@@ -58,8 +58,8 @@ class LoeysingDAOTest(
   @DisplayName(
       "når det finnes to løysingar i databasen, så skal vi kunne hente en eller begge med getLoeysingList")
   fun getLoeysingListTest() {
-    val namn1 = UUID.randomUUID().toString().also { namesToBeDeleted += it }
-    val namn2 = UUID.randomUUID().toString().also { namesToBeDeleted += it }
+    val namn1 = UUID.randomUUID().toString()
+    val namn2 = UUID.randomUUID().toString()
     val id1 = createLoeysing(name = namn1)
     val id2 = createLoeysing(name = namn2)
 
@@ -78,7 +78,7 @@ class LoeysingDAOTest(
   fun oppdaterLoeysing() {
     val id = createLoeysing()
     val loeysing = loeysingDAO.getLoeysing(id)!!
-    val nyttNamn = UUID.randomUUID().toString().also { namesToBeDeleted += it }
+    val nyttNamn = UUID.randomUUID().toString()
     val updated = loeysing.copy(namn = nyttNamn)
 
     loeysingDAO.update(updated)
@@ -87,9 +87,21 @@ class LoeysingDAOTest(
     assertThat(readUpdated.namn).isEqualTo(nyttNamn)
   }
 
+  @Test
+  @DisplayName("når vi slettar ei løysing, så skal den ikkje lenger vere tilgjengeleg")
+  fun slettaLoeysing() {
+    val id = createLoeysing()
+    loeysingDAO.delete(id)
+    val loeysing = loeysingDAO.getLoeysing(id)
+    assertThat(loeysing).isNull()
+  }
+
   /** Lager ei ny løysing med ei oppdatering. */
   private fun createLoeysing(name: String = loeysingTestName, url: String = loeysingTestUrl): Int {
-    val id = loeysingDAO.createLoeysing("to be updated", URI(url).toURL(), loeysingTestOrgNummer)
+    val id =
+        loeysingDAO.createLoeysing("to be updated", URI(url).toURL(), loeysingTestOrgNummer).also {
+          idsToBeDeleted += it
+        }
     val loeysing = loeysingDAO.getLoeysing(id)!!
     loeysingDAO.update(loeysing.copy(namn = name))
     return id
