@@ -20,6 +20,7 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
       val namn: String?,
       val url: String?,
       val orgnummer: String?,
+      val aktiv: Boolean?,
       val original: Int
   )
 
@@ -29,6 +30,7 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
           namn = update.namn ?: base.namn,
           url = update.url ?: base.url,
           orgnummer = update.orgnummer ?: base.orgnummer,
+          aktiv = update.aktiv ?: base.aktiv,
           original = update.original)
 
   fun getLoeysing(id: Int): Loeysing? = getLoeysingList(listOf(id)).firstOrNull()
@@ -43,7 +45,7 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
     val partials =
         jdbcTemplate.query(
             """
-              select id, namn, url, orgnummer, original
+              select id, namn, url, orgnummer, aktiv, original
               from loeysing
               $whereClause
               order by tidspunkt
@@ -53,11 +55,9 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
             DataClassRowMapper.newInstance(PartialLoeysing::class.java))
     return partials
         .groupBy { it.original }
-        .map { (_, partials) ->
-          partials.reduce(::combine).let {
-            Loeysing(it.id, it.namn!!, URL(it.url!!), it.orgnummer!!)
-          }
-        }
+        .map { (_, partials) -> partials.reduce(::combine) }
+        .filter { it.aktiv!! }
+        .map { Loeysing(it.id, it.namn!!, URL(it.url!!), it.orgnummer!!) }
   }
 
   @Transactional
@@ -113,5 +113,15 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
             "url" to diff.url?.toString(),
             "orgnummer" to diff.orgnummer,
             "original" to latest.id))
+  }
+
+  fun delete(id: Int) {
+    jdbcTemplate.update(
+        """
+              insert into loeysing (aktiv, original, tidspunkt)
+              values (false, :id, now())
+          """
+            .trimIndent(),
+        mapOf("id" to id))
   }
 }
