@@ -1,6 +1,7 @@
 package no.uutilsynet.testlab2loeysingsregister
 
 import java.net.URI
+import java.time.Instant
 import java.util.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.*
@@ -9,9 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest
 
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class LoeysingDAOTest(
-    @Autowired val loeysingDAO: LoeysingDAO,
-) {
+class LoeysingDAOTest(@Autowired val loeysingDAO: LoeysingDAO) {
 
   val loeysingTestName = UUID.randomUUID().toString()
   val loeysingTestUrl = "https://www.example.com/"
@@ -33,6 +32,30 @@ class LoeysingDAOTest(
     assertThat(loeysing?.namn).isEqualTo(loeysingTestName)
     assertThat(loeysing?.url?.toString()).isEqualTo(loeysingTestUrl)
     assertThat(loeysing?.orgnummer).isEqualTo(loeysingTestOrgNummer)
+  }
+
+  @Test
+  @DisplayName(
+      "når ei løysing har blitt oppdatert, så skal vi kunne hente ein tidligare versjon ved å oppgi tidspunkt")
+  fun tidligareVersjon() {
+    val beforeCreation = Instant.now()
+
+    val id = createLoeysing()
+    val loeysing = loeysingDAO.getLoeysing(id)!!
+    val namn = loeysing.namn
+    val afterCreation = Instant.now()
+
+    val updated = loeysing.copy(namn = "updated")
+    loeysingDAO.update(updated)
+
+    val latest = loeysingDAO.getLoeysing(id)!!
+    assertThat(latest.namn).isEqualTo("updated")
+
+    val firstVersion = loeysingDAO.getLoeysing(id, afterCreation)!!
+    assertThat(firstVersion.namn).isEqualTo(namn)
+
+    val doesNotExist = loeysingDAO.getLoeysing(id, beforeCreation)
+    assertThat(doesNotExist).isNull()
   }
 
   @Test

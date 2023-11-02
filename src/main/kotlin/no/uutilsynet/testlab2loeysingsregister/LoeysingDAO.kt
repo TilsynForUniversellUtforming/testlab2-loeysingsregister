@@ -1,6 +1,7 @@
 package no.uutilsynet.testlab2loeysingsregister
 
 import java.net.URL
+import java.sql.Timestamp
 import java.time.Instant
 import no.uutilsynet.testlab2loeysingsregister.LoeysingDAO.LoeysingParams.loeysingRowMapper
 import org.springframework.jdbc.core.DataClassRowMapper
@@ -39,12 +40,13 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
         tidspunkt = latest.tidspunkt)
   }
 
-  fun getLoeysing(id: Int): Loeysing? = getLoeysingList(listOf(id)).firstOrNull()
+  fun getLoeysing(id: Int, atTime: Instant = Instant.now()): Loeysing? =
+      getLoeysingList(listOf(id), atTime).firstOrNull()
 
-  fun getLoeysingList(idList: List<Int>? = null): List<Loeysing> {
-    val whereClause: String =
+  fun getLoeysingList(idList: List<Int>? = null, atTime: Instant = Instant.now()): List<Loeysing> {
+    val idFilter: String =
         if (idList != null) {
-          "where original in (:idList)"
+          "and original in (:idList)"
         } else {
           ""
         }
@@ -53,10 +55,11 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
             """
               select id, namn, url, orgnummer, aktiv, original, tidspunkt
               from loeysing
-              $whereClause
+              where tidspunkt <= :atTime
+              $idFilter
           """
                 .trimIndent(),
-            mapOf("idList" to idList),
+            mapOf("idList" to idList, "atTime" to Timestamp.from(atTime)),
             DataClassRowMapper.newInstance(PartialLoeysing::class.java))
     return partials
         .groupBy { it.original }
