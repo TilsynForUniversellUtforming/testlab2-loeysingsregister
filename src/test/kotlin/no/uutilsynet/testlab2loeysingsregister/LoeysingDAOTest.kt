@@ -30,6 +30,7 @@ class LoeysingDAOTest(
     val loeysing = loeysingDAO.getLoeysing(id)
     assertThat(loeysing?.namn).isEqualTo(loeysingTestName)
     assertThat(loeysing?.url?.toString()).isEqualTo(loeysingTestUrl)
+    assertThat(loeysing?.orgnummer).isEqualTo(loeysingTestOrgNummer)
   }
 
   @Test
