@@ -30,12 +30,20 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
   fun createLoeysing(namn: String, url: URL, orgnummer: String, id: Int? = null): Int =
       if (id != null) {
         jdbcTemplate.queryForObject(
-            "insert into loeysing (id, namn, url, orgnummer) values (:id, :namn, :url, :orgnummer) returning id",
+            "insert into loeysing (id, namn, url, orgnummer, aktiv, original, tidspunkt) values (:id, :namn, :url, :orgnummer, true, :id, now()) returning id",
             mapOf("id" to id, "namn" to namn, "url" to url.toString(), "orgnummer" to orgnummer),
             Int::class.java)!!
       } else {
         jdbcTemplate.queryForObject(
-            "insert into loeysing (namn, url, orgnummer) values (:namn, :url, :orgnummer) returning id",
+            """
+                with cte as (
+                    select nextval('loeysing_id_seq') as id
+                )
+                insert into loeysing (id, namn, url, orgnummer, aktiv, original, tidspunkt)
+                select id, :namn, :url, :orgnummer, true, id, now()
+                from cte
+                returning id
+                """,
             mapOf("namn" to namn, "url" to url.toString(), "orgnummer" to orgnummer),
             Int::class.java)!!
       }
