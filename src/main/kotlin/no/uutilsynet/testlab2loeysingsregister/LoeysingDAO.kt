@@ -1,6 +1,7 @@
 package no.uutilsynet.testlab2loeysingsregister
 
 import java.net.URL
+import java.time.Instant
 import no.uutilsynet.testlab2loeysingsregister.LoeysingDAO.LoeysingParams.loeysingRowMapper
 import org.springframework.jdbc.core.DataClassRowMapper
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
@@ -21,17 +22,22 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
       val url: String?,
       val orgnummer: String?,
       val aktiv: Boolean?,
-      val original: Int
+      val original: Int,
+      val tidspunkt: Instant
   )
 
-  private fun combine(base: PartialLoeysing, update: PartialLoeysing): PartialLoeysing =
-      PartialLoeysing(
-          id = base.original,
-          namn = update.namn ?: base.namn,
-          url = update.url ?: base.url,
-          orgnummer = update.orgnummer ?: base.orgnummer,
-          aktiv = update.aktiv ?: base.aktiv,
-          original = update.original)
+  private fun combine(a: PartialLoeysing, b: PartialLoeysing): PartialLoeysing {
+    val earliest = if (a.tidspunkt.isBefore(b.tidspunkt)) a else b
+    val latest = if (a.tidspunkt.isAfter(b.tidspunkt)) a else b
+    return PartialLoeysing(
+        id = earliest.original,
+        namn = latest.namn ?: earliest.namn,
+        url = latest.url ?: earliest.url,
+        orgnummer = latest.orgnummer ?: earliest.orgnummer,
+        aktiv = latest.aktiv ?: earliest.aktiv,
+        original = latest.original,
+        tidspunkt = latest.tidspunkt)
+  }
 
   fun getLoeysing(id: Int): Loeysing? = getLoeysingList(listOf(id)).firstOrNull()
 
@@ -45,10 +51,9 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
     val partials =
         jdbcTemplate.query(
             """
-              select id, namn, url, orgnummer, aktiv, original
+              select id, namn, url, orgnummer, aktiv, original, tidspunkt
               from loeysing
               $whereClause
-              order by tidspunkt
           """
                 .trimIndent(),
             mapOf("idList" to idList),
