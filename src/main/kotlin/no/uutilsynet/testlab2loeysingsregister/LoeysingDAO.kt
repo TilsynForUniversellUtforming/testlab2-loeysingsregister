@@ -3,7 +3,6 @@ package no.uutilsynet.testlab2loeysingsregister
 import java.net.URL
 import java.sql.Timestamp
 import java.time.Instant
-import no.uutilsynet.testlab2loeysingsregister.LoeysingDAO.LoeysingParams.loeysingRowMapper
 import org.springframework.jdbc.core.DataClassRowMapper
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Component
@@ -12,13 +11,9 @@ import org.springframework.transaction.annotation.Transactional
 @Component
 class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
 
-  object LoeysingParams {
-
-    val loeysingRowMapper = DataClassRowMapper.newInstance(Loeysing::class.java)
-  }
+  private val loeysingRowMapper = DataClassRowMapper.newInstance(Loeysing::class.java)
 
   private data class PartialLoeysing(
-      val id: Int,
       val namn: String?,
       val url: String?,
       val orgnummer: String?,
@@ -28,16 +23,14 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
   )
 
   private fun combine(a: PartialLoeysing, b: PartialLoeysing): PartialLoeysing {
-    val earliest = if (a.tidspunkt.isBefore(b.tidspunkt)) a else b
-    val latest = if (a.tidspunkt.isAfter(b.tidspunkt)) a else b
+    val (earliest, latest) = if (a.tidspunkt < b.tidspunkt) Pair(a, b) else Pair(b, a)
     return PartialLoeysing(
-        id = earliest.original,
-        namn = latest.namn ?: earliest.namn,
-        url = latest.url ?: earliest.url,
-        orgnummer = latest.orgnummer ?: earliest.orgnummer,
-        aktiv = latest.aktiv ?: earliest.aktiv,
-        original = latest.original,
-        tidspunkt = latest.tidspunkt)
+        latest.namn ?: earliest.namn,
+        latest.url ?: earliest.url,
+        latest.orgnummer ?: earliest.orgnummer,
+        latest.aktiv ?: earliest.aktiv,
+        latest.original,
+        latest.tidspunkt)
   }
 
   fun getLoeysing(id: Int, atTime: Instant = Instant.now()): Loeysing? =
@@ -53,7 +46,7 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
     val partials =
         jdbcTemplate.query(
             """
-              select id, namn, url, orgnummer, aktiv, original, tidspunkt
+              select namn, url, orgnummer, aktiv, original, tidspunkt
               from loeysing
               where tidspunkt <= :atTime
               $idFilter
@@ -65,7 +58,7 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
         .groupBy { it.original }
         .map { (_, partials) -> partials.reduce(::combine) }
         .filter { it.aktiv!! }
-        .map { Loeysing(it.id, it.namn!!, URL(it.url!!), it.orgnummer!!) }
+        .map { Loeysing(it.original, it.namn!!, URL(it.url!!), it.orgnummer!!) }
   }
 
   @Transactional
