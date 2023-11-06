@@ -78,4 +78,14 @@ class LoeysingResource(val loeysingDAO: LoeysingDAO) {
               }
             })
   }
+
+  @DeleteMapping("{id}")
+  fun delete(@PathVariable id: Int): ResponseEntity<Any> =
+      runCatching { loeysingDAO.delete(id) }
+          .fold(
+              { ResponseEntity.noContent().build() },
+              { exception ->
+                logger.error("Feila då vi skulle slette løysing", exception)
+                ResponseEntity.internalServerError().build()
+              })
 }
