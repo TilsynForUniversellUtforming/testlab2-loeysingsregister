@@ -39,9 +39,9 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
   fun getLoeysingList(idList: List<Int>? = null, atTime: Instant = Instant.now()): List<Loeysing> {
     val idFilter: String =
         if (idList != null) {
-          "and original in (:idList)"
+          "original in (:idList)"
         } else {
-          ""
+          "true"
         }
     val partials =
         jdbcTemplate.query(
@@ -49,7 +49,7 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
               select namn, url, orgnummer, aktiv, original, tidspunkt
               from loeysing
               where tidspunkt <= :atTime
-              $idFilter
+              and $idFilter
           """
                 .trimIndent(),
             mapOf("idList" to idList, "atTime" to Timestamp.from(atTime)),
@@ -59,6 +59,23 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
         .map { (_, partials) -> partials.reduce(::combine) }
         .filter { it.aktiv!! }
         .map { Loeysing(it.original, it.namn!!, URL(it.url!!), it.orgnummer!!) }
+  }
+
+  @Transactional
+  fun findLoeysingar(searchTerm: String): List<Loeysing> {
+    val search = "%$searchTerm%"
+    val ids =
+        jdbcTemplate.queryForList(
+            """
+            select distinct original
+            from loeysing
+            where lower(namn) like lower(:search)
+            or orgnummer like :search
+        """
+                .trimIndent(),
+            mapOf("search" to search),
+            Int::class.java)
+    return if (ids.isEmpty()) emptyList() else getLoeysingList(ids)
   }
 
   @Transactional
