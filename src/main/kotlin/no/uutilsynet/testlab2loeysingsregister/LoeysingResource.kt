@@ -46,18 +46,32 @@ class LoeysingResource(val loeysingDAO: LoeysingDAO) {
           ?: ResponseEntity.notFound().build()
 
   @GetMapping
-  fun getMany(@RequestParam ids: String? = null): ResponseEntity<List<Loeysing>> {
+  fun getMany(
+      @RequestParam ids: String?,
+      @RequestParam search: String?
+  ): ResponseEntity<List<Loeysing>> {
     return runCatching {
-          if (ids != null) {
-            val idList = validateIdList(ids).getOrThrow()
-            loeysingDAO.getLoeysingList(idList)
-          } else {
-            loeysingDAO.getLoeysingList()
+          when {
+            ids != null && search?.isNotBlank() == true -> {
+              val idList = validateIdList(ids).getOrThrow()
+              loeysingDAO.findLoeysingar(search).filter { it.id in idList }
+            }
+            search?.isNotBlank() == true -> {
+              loeysingDAO.findLoeysingar(search)
+            }
+            ids != null -> {
+              val idList = validateIdList(ids).getOrThrow()
+              loeysingDAO.getLoeysingList(idList)
+            }
+            else -> {
+              loeysingDAO.getLoeysingList()
+            }
           }
         }
         .fold(
             { ResponseEntity.ok(it) },
             { exception ->
+              logger.error("Feila då vi skulle hente løysingar", exception)
               when (exception) {
                 is IllegalArgumentException -> ResponseEntity.badRequest().build()
                 else -> ResponseEntity.internalServerError().build()

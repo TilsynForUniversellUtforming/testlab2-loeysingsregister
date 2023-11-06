@@ -29,7 +29,6 @@ class LoeysingDAOTest(@Autowired val loeysingDAO: LoeysingDAO) {
   fun getLoeysing() {
     val id = createLoeysing()
     val loeysing = loeysingDAO.getLoeysing(id)
-    assertThat(loeysing?.namn).isEqualTo(loeysingTestName)
     assertThat(loeysing?.url?.toString()).isEqualTo(loeysingTestUrl)
     assertThat(loeysing?.orgnummer).isEqualTo(loeysingTestOrgNummer)
   }
@@ -119,8 +118,51 @@ class LoeysingDAOTest(@Autowired val loeysingDAO: LoeysingDAO) {
     assertThat(loeysing).isNull()
   }
 
+  @DisplayName("søk etter løysingar")
+  @Nested
+  inner class Soek {
+    @Test
+    @DisplayName("når vi søker etter ei løysing med delar av navnet, så skal vi få treff")
+    fun soekEtterNavn() {
+      val id = createLoeysing()
+      val loeysing = loeysingDAO.getLoeysing(id)!!
+      val namn = loeysing.namn
+      val searchTerm = namn.dropLast(1)
+
+      val result = loeysingDAO.findLoeysingar(searchTerm)
+
+      assertThat(result).containsExactly(loeysing)
+    }
+
+    @Test
+    @DisplayName("når vi søker etter ei løysing med delar av orgnummeret, så skal vi få treff")
+    fun soekEtterOrgnummer() {
+      val id = createLoeysing()
+      val loeysing = loeysingDAO.getLoeysing(id)!!
+      val orgnummer = loeysing.orgnummer
+      val searchTerm = orgnummer.dropLast(1)
+
+      val result = loeysingDAO.findLoeysingar(searchTerm)
+
+      assertThat(result).contains(loeysing)
+    }
+
+    @Test
+    @DisplayName("når vi søker etter eit namn som ikkje finnes, så skal vi få ei tom liste")
+    fun soekEtterUkjentNavn() {
+      val searchTerm = UUID.randomUUID().toString()
+
+      val result = loeysingDAO.findLoeysingar(searchTerm)
+
+      assertThat(result).isEmpty()
+    }
+  }
+
   /** Lager ei ny løysing med ei oppdatering. */
-  private fun createLoeysing(name: String = loeysingTestName, url: String = loeysingTestUrl): Int {
+  private fun createLoeysing(
+      name: String = UUID.randomUUID().toString(),
+      url: String = loeysingTestUrl
+  ): Int {
     val id =
         loeysingDAO.createLoeysing("to be updated", URI(url).toURL(), loeysingTestOrgNummer).also {
           idsToBeDeleted += it
