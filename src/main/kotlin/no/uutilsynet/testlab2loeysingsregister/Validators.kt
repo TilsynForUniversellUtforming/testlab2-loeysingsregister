@@ -20,9 +20,13 @@ fun validateOrgNummer(s: String?): Result<String> = runCatching {
   }
 }
 
-fun validateId(s: String?): Result<Int> = runCatching {
-  require(!s.isNullOrBlank()) { "mangler id" }
-  s.toInt()
+fun validateId(s: String?): Result<Int?> = runCatching {
+  if (s == null) {
+    null
+  } else {
+    require(s.toIntOrNull() != null) { "id er ikkje ein gyldig id" }
+    s.toInt()
+  }
 }
 
 fun validateNamn(s: String?): Result<String> = runCatching {
