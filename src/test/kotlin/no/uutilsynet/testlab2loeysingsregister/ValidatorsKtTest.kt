@@ -64,10 +64,10 @@ class ValidatorsKtTest {
     }
 
     @Test
-    fun `null er ikkje ein gyldig input`() {
+    fun `null er ein gyldig input`() {
       val nullId: String? = null
       val result = validateId(nullId)
-      assertTrue(result.isFailure)
+      assertTrue(result.isSuccess)
     }
   }
 
