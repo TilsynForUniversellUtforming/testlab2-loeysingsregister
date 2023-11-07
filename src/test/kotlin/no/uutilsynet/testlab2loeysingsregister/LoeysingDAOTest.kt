@@ -12,7 +12,6 @@ import org.springframework.boot.test.context.SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class LoeysingDAOTest(@Autowired val loeysingDAO: LoeysingDAO) {
 
-  val loeysingTestName = UUID.randomUUID().toString()
   val loeysingTestUrl = "https://www.example.com/"
   val loeysingTestOrgNummer = "000000000"
 

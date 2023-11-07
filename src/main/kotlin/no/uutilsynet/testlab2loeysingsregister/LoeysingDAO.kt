@@ -85,6 +85,7 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
             "insert into loeysing (id, namn, url, orgnummer, aktiv, original, tidspunkt) values (:id, :namn, :url, :orgnummer, true, :id, now()) returning id",
             mapOf("id" to id, "namn" to namn, "url" to url.toString(), "orgnummer" to orgnummer),
             Int::class.java)!!
+        jdbcTemplate.update("select setval('loeysing_id_seq', :id)", mapOf("id" to id))
       } else {
         jdbcTemplate.queryForObject(
             """
