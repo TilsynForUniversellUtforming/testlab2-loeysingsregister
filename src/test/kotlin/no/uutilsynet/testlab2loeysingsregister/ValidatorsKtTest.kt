@@ -1,8 +1,6 @@
 package no.uutilsynet.testlab2loeysingsregister
 
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -43,31 +41,6 @@ class ValidatorsKtTest {
       val orgnummer = null
       val result = validateOrgNummer(orgnummer)
       assertThat(result.isFailure).isTrue()
-    }
-  }
-
-  @DisplayName("id")
-  @Nested
-  inner class Id {
-    @Test
-    fun `ein gyldig id skal returnere success`() {
-      val validId = "12345"
-      val result = validateOptionalId(validId)
-      assertEquals(12345, result.getOrNull())
-    }
-
-    @Test
-    fun `ein ugyldig id skal returnere failure`() {
-      val invalidId = "invalidId"
-      val result = validateOptionalId(invalidId)
-      assertTrue(result.isFailure)
-    }
-
-    @Test
-    fun `null er ein gyldig input`() {
-      val nullId: String? = null
-      val result = validateOptionalId(nullId)
-      assertTrue(result.isSuccess)
     }
   }
 
