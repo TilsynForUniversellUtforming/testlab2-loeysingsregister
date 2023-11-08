@@ -93,7 +93,7 @@ class LoeysingResource(val loeysingDAO: LoeysingDAO) {
             loeysingDAO.update(validated).getOrThrow()
           }
           .fold(
-              { ResponseEntity.ok().build() },
+              { ResponseEntity.noContent().build() },
               { exception ->
                 logger.error(
                     "Feila då vi skulle oppdatere løysing med id ${loeysing.id}", exception)
