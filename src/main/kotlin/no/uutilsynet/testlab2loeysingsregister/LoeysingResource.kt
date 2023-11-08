@@ -17,16 +17,13 @@ class LoeysingResource(val loeysingDAO: LoeysingDAO) {
   @PostMapping
   fun createLoeysing(@RequestBody body: Map<String, String>) =
       runCatching {
-            val id = validateOptionalId(body["id"]).getOrThrow()
             val namn = validateNamn(body["namn"]).getOrThrow()
             val url = validateURL(body["url"]).getOrThrow()
             val orgnummer = validateOrgNummer(body["orgnummer"]).getOrThrow()
 
-            val existingLoeysing = loeysingDAO.findLoeysingByURLAndOrgnummer(url, orgnummer)
-            existingLoeysing?.id
-                ?: loeysingDAO.createLoeysing(namn, url, orgnummer, id).also {
-                  logger.info("lagra ny løysing ($url, $orgnummer)")
-                }
+            loeysingDAO.createLoeysing(namn, url, orgnummer).also {
+              logger.info("lagra løysing ($url, $orgnummer)")
+            }
           }
           .fold(
               { id ->

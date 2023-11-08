@@ -1,5 +1,6 @@
 package no.uutilsynet.testlab2loeysingsregister
 
+import java.net.URI
 import java.net.URL
 import java.sql.Timestamp
 import java.time.Instant
@@ -10,8 +11,6 @@ import org.springframework.transaction.annotation.Transactional
 
 @Component
 class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
-
-  private val loeysingRowMapper = DataClassRowMapper.newInstance(Loeysing::class.java)
 
   private data class PartialLoeysing(
       val namn: String?,
@@ -33,10 +32,10 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
         latest.tidspunkt)
   }
 
-  fun getLoeysing(id: Int, atTime: Instant = Instant.now()): Loeysing? =
-      getLoeysingList(listOf(id), atTime).firstOrNull()
-
-  fun getLoeysingList(idList: List<Int>? = null, atTime: Instant = Instant.now()): List<Loeysing> {
+  private fun getPartials(
+      idList: List<Int>? = null,
+      atTime: Instant = Instant.now()
+  ): List<PartialLoeysing> {
     val idFilter: String =
         if (idList != null) {
           "original in (:idList)"
@@ -54,12 +53,16 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
                 .trimIndent(),
             mapOf("idList" to idList, "atTime" to Timestamp.from(atTime)),
             DataClassRowMapper.newInstance(PartialLoeysing::class.java))
-    return partials
-        .groupBy { it.original }
-        .map { (_, partials) -> partials.reduce(::combine) }
-        .filter { it.aktiv!! }
-        .map { Loeysing(it.original, it.namn!!, URL(it.url!!), it.orgnummer!!) }
+    return partials.groupBy { it.original }.map { (_, partials) -> partials.reduce(::combine) }
   }
+
+  fun getLoeysing(id: Int, atTime: Instant = Instant.now()): Loeysing? =
+      getLoeysingList(listOf(id), atTime).firstOrNull()
+
+  fun getLoeysingList(idList: List<Int>? = null, atTime: Instant = Instant.now()): List<Loeysing> =
+      getPartials(idList, atTime)
+          .filter { it.aktiv!! }
+          .map { Loeysing(it.original, it.namn!!, URL(it.url!!), it.orgnummer!!) }
 
   @Transactional
   fun findLoeysingar(searchTerm: String): List<Loeysing> {
@@ -79,40 +82,52 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
   }
 
   @Transactional
-  fun createLoeysing(namn: String, url: URL, orgnummer: String, id: Int? = null): Int =
-      if (id != null) {
-        jdbcTemplate.queryForObject(
-            "insert into loeysing (id, namn, url, orgnummer, aktiv, original, tidspunkt) values (:id, :namn, :url, :orgnummer, true, :id, now()) returning id",
-            mapOf("id" to id, "namn" to namn, "url" to url.toString(), "orgnummer" to orgnummer),
-            Int::class.java)!!
-        jdbcTemplate.update("select setval('loeysing_id_seq', :id)", mapOf("id" to id))
-      } else {
-        jdbcTemplate.queryForObject(
+  fun createLoeysing(namn: String, url: URL, orgnummer: String): Int {
+    val existing = findLoeysingByURLAndOrgnummer(url, orgnummer)
+    return if (existing == null) {
+      jdbcTemplate.queryForObject(
+          """
+                  with cte as (
+                      select nextval('loeysing_id_seq') as id
+                  )
+                  insert into loeysing (id, namn, url, orgnummer, aktiv, original, tidspunkt)
+                  select id, :namn, :url, :orgnummer, true, id, now()
+                  from cte
+                  returning id
+                  """,
+          mapOf("namn" to namn, "url" to url.toString(), "orgnummer" to orgnummer),
+          Int::class.java)!!
+    } else if (existing.aktiv == false) {
+      jdbcTemplate.update(
+          """
+                insert into loeysing (aktiv, original, tidspunkt)
+                values (true, :original, now())
             """
-                with cte as (
-                    select nextval('loeysing_id_seq') as id
-                )
-                insert into loeysing (id, namn, url, orgnummer, aktiv, original, tidspunkt)
-                select id, :namn, :url, :orgnummer, true, id, now()
-                from cte
-                returning id
-                """,
-            mapOf("namn" to namn, "url" to url.toString(), "orgnummer" to orgnummer),
-            Int::class.java)!!
-      }
+              .trimIndent(),
+          mapOf("original" to existing.original))
+      existing.original
+    } else {
+      existing.original
+    }
+  }
 
-  fun findLoeysingByURLAndOrgnummer(url: URL, orgnummer: String): Loeysing? {
+  private fun findLoeysingByURLAndOrgnummer(url: URL, orgnummer: String): PartialLoeysing? {
     val sammeOrgnummer =
-        jdbcTemplate.query(
+        jdbcTemplate.queryForList(
             """
-                select id, namn, url, orgnummer
+                select distinct original
                 from loeysing
                 where orgnummer = :orgnummer
             """
                 .trimIndent(),
             mapOf("orgnummer" to orgnummer),
-            loeysingRowMapper)
-    return sammeOrgnummer.find { loeysing -> sameURL(loeysing.url, url) }
+            Int::class.java)
+    return if (sammeOrgnummer.isEmpty()) {
+      null
+    } else {
+      val partials = getPartials(sammeOrgnummer)
+      partials.find { partial -> sameURL(URI(partial.url!!).toURL(), url) }
+    }
   }
 
   @Transactional
