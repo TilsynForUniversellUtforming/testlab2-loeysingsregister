@@ -12,7 +12,6 @@ import org.springframework.boot.test.context.SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class LoeysingDAOTest(@Autowired val loeysingDAO: LoeysingDAO) {
 
-  val loeysingTestUrl = "https://www.example.com/"
   val loeysingTestOrgNummer = "000000000"
 
   val idsToBeDeleted = mutableListOf<Int>()
@@ -26,9 +25,12 @@ class LoeysingDAOTest(@Autowired val loeysingDAO: LoeysingDAO) {
   @Test
   @DisplayName("Skal hente løsning fra DAO")
   fun getLoeysing() {
-    val id = createLoeysing()
+    val name = UUID.randomUUID().toString()
+    val url = "https://www.$name.com"
+    val id = createLoeysing(name, url)
     val loeysing = loeysingDAO.getLoeysing(id)
-    assertThat(loeysing?.url?.toString()).isEqualTo(loeysingTestUrl)
+    assertThat(loeysing?.namn).isEqualTo(name)
+    assertThat(loeysing?.url?.toString()).isEqualTo(url)
     assertThat(loeysing?.orgnummer).isEqualTo(loeysingTestOrgNummer)
   }
 
@@ -81,8 +83,8 @@ class LoeysingDAOTest(@Autowired val loeysingDAO: LoeysingDAO) {
   fun getLoeysingListTest() {
     val namn1 = UUID.randomUUID().toString()
     val namn2 = UUID.randomUUID().toString()
-    val id1 = createLoeysing(name = namn1)
-    val id2 = createLoeysing(name = namn2)
+    val id1 = createLoeysing(name = namn1, url = "https://www.example1.com")
+    val id2 = createLoeysing(name = namn2, url = "https://www.example2.com")
 
     val result1 = loeysingDAO.getLoeysingList(listOf(id1))
     val result2 = loeysingDAO.getLoeysingList(listOf(id1, id2))
@@ -115,6 +117,21 @@ class LoeysingDAOTest(@Autowired val loeysingDAO: LoeysingDAO) {
     loeysingDAO.delete(id)
     val loeysing = loeysingDAO.getLoeysing(id)
     assertThat(loeysing).isNull()
+  }
+
+  @Test
+  @DisplayName(
+      "når vi slettar ei løysing, og så opprettar den igjen, så skal den sletta løysinga settast til aktiv")
+  fun slettaLoeysingOgOpprettaIgjen() {
+    val id = createLoeysing()
+    val loeysing = loeysingDAO.getLoeysing(id)!!
+    loeysingDAO.delete(id)
+    assertThat(loeysingDAO.getLoeysing(id)).isNull()
+
+    val id2 = createLoeysing(loeysing.namn, loeysing.url.toString(), loeysing.orgnummer)
+    val loeysing2 = loeysingDAO.getLoeysing(id2)
+    assertThat(loeysing2).isNotNull
+    assertThat(id2).isEqualTo(id)
   }
 
   @DisplayName("søk etter løysingar")
@@ -160,7 +177,8 @@ class LoeysingDAOTest(@Autowired val loeysingDAO: LoeysingDAO) {
   /** Lager ei ny løysing med ei oppdatering. */
   private fun createLoeysing(
       name: String = UUID.randomUUID().toString(),
-      url: String = loeysingTestUrl
+      url: String = "https://www.$name.com",
+      orgnummer: String = generateOrgnummer()
   ): Int {
     val id =
         loeysingDAO.createLoeysing("to be updated", URI(url).toURL(), loeysingTestOrgNummer).also {
@@ -169,5 +187,27 @@ class LoeysingDAOTest(@Autowired val loeysingDAO: LoeysingDAO) {
     val loeysing = loeysingDAO.getLoeysing(id)!!
     loeysingDAO.update(loeysing.copy(namn = name))
     return id
+  }
+
+  private fun generateOrgnummer(): String {
+    val sevenRandomDigits: String = (1000000..9999999).random().toString()
+    return "$sevenRandomDigits${calculateChecksum(sevenRandomDigits)}"
+  }
+
+  private fun calculateChecksum(sevenDigits: String): String {
+    val weights = listOf(3, 2, 7, 6, 5, 4, 3, 2)
+    val sum = sevenDigits.mapIndexed { index, c -> c.toString().toInt() * weights[index] }.sum()
+    return when (val remainder = sum % 11) {
+      0 -> {
+        "0"
+      }
+      10 -> {
+        val sevenRandomDigits: String = (1000000..9999999).random().toString()
+        calculateChecksum(sevenRandomDigits) // try again
+      }
+      else -> {
+        (11 - remainder).toString()
+      }
+    }
   }
 }
