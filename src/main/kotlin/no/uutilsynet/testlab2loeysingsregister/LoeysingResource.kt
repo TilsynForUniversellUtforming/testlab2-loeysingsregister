@@ -17,7 +17,7 @@ class LoeysingResource(val loeysingDAO: LoeysingDAO) {
   @PostMapping
   fun createLoeysing(@RequestBody body: Map<String, String>) =
       runCatching {
-            val id = validateId(body["id"]).getOrThrow()
+            val id = validateOptionalId(body["id"]).getOrThrow()
             val namn = validateNamn(body["namn"]).getOrThrow()
             val url = validateURL(body["url"]).getOrThrow()
             val orgnummer = validateOrgNummer(body["orgnummer"]).getOrThrow()
@@ -84,13 +84,32 @@ class LoeysingResource(val loeysingDAO: LoeysingDAO) {
             })
   }
 
+  @PutMapping
+  fun update(@RequestBody loeysing: Loeysing): ResponseEntity<Unit> =
+      runCatching {
+            val namn = validateNamn(loeysing.namn).getOrThrow()
+            val orgnummer = validateOrgNummer(loeysing.orgnummer).getOrThrow()
+            val validated = Loeysing(loeysing.id, namn, loeysing.url, orgnummer)
+            loeysingDAO.update(validated).getOrThrow()
+          }
+          .fold(
+              { ResponseEntity.ok().build() },
+              { exception ->
+                logger.error(
+                    "Feila då vi skulle oppdatere løysing med id ${loeysing.id}", exception)
+                when (exception) {
+                  is IllegalArgumentException -> ResponseEntity.badRequest().build()
+                  else -> ResponseEntity.internalServerError().build()
+                }
+              })
+
   @DeleteMapping("{id}")
   fun delete(@PathVariable id: Int): ResponseEntity<Any> =
       runCatching { loeysingDAO.delete(id) }
           .fold(
               { ResponseEntity.noContent().build() },
               { exception ->
-                logger.error("Feila då vi skulle slette løysing", exception)
+                logger.error("Feila då vi skulle slette løysing med id ${id}", exception)
                 ResponseEntity.internalServerError().build()
               })
 }

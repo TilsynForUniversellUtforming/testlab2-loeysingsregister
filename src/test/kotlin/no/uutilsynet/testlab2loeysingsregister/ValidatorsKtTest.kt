@@ -52,21 +52,21 @@ class ValidatorsKtTest {
     @Test
     fun `ein gyldig id skal returnere success`() {
       val validId = "12345"
-      val result = validateId(validId)
+      val result = validateOptionalId(validId)
       assertEquals(12345, result.getOrNull())
     }
 
     @Test
     fun `ein ugyldig id skal returnere failure`() {
       val invalidId = "invalidId"
-      val result = validateId(invalidId)
+      val result = validateOptionalId(invalidId)
       assertTrue(result.isFailure)
     }
 
     @Test
     fun `null er ein gyldig input`() {
       val nullId: String? = null
-      val result = validateId(nullId)
+      val result = validateOptionalId(nullId)
       assertTrue(result.isSuccess)
     }
   }
