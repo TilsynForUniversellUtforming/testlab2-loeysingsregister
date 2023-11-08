@@ -20,7 +20,7 @@ fun validateOrgNummer(s: String?): Result<String> = runCatching {
   }
 }
 
-fun validateId(s: String?): Result<Int?> = runCatching {
+fun validateOptionalId(s: String?): Result<Int?> = runCatching {
   if (s == null) {
     null
   } else {
