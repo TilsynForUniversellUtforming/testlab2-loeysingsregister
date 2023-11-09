@@ -65,7 +65,7 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
           .map { Loeysing(it.original, it.namn!!, URL(it.url!!), it.orgnummer!!) }
 
   @Transactional
-  fun findLoeysingar(searchTerm: String): List<Loeysing> {
+  fun findLoeysingar(searchTerm: String, atTime: Instant = Instant.now()): List<Loeysing> {
     val search = "%$searchTerm%"
     val ids =
         jdbcTemplate.queryForList(
@@ -78,7 +78,7 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
                 .trimIndent(),
             mapOf("search" to search),
             Int::class.java)
-    return if (ids.isEmpty()) emptyList() else getLoeysingList(ids)
+    return if (ids.isEmpty()) emptyList() else getLoeysingList(ids, atTime)
   }
 
   @Transactional

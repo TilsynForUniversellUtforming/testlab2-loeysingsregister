@@ -1,6 +1,7 @@
 package no.uutilsynet.testlab2loeysingsregister
 
 import java.net.URI
+import java.time.Instant
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
@@ -43,30 +44,34 @@ class LoeysingResource(val loeysingDAO: LoeysingDAO) {
               })
 
   @GetMapping("{id}")
-  fun getLoeysing(@PathVariable id: Int): ResponseEntity<Loeysing> =
-      loeysingDAO.getLoeysing(id)?.let { ResponseEntity.ok(it) }
-          ?: ResponseEntity.notFound().build()
+  fun getLoeysing(@PathVariable id: Int, @RequestParam atTime: String?): ResponseEntity<Loeysing> {
+    val instant = atTime?.let { validateInstant(atTime).getOrThrow() } ?: Instant.now()
+    return loeysingDAO.getLoeysing(id, instant)?.let { ResponseEntity.ok(it) }
+        ?: ResponseEntity.notFound().build()
+  }
 
   @GetMapping
   fun getMany(
       @RequestParam ids: String?,
-      @RequestParam search: String?
+      @RequestParam search: String?,
+      @RequestParam atTime: String?
   ): ResponseEntity<List<Loeysing>> {
     return runCatching {
+          val instant = atTime?.let { validateInstant(atTime).getOrThrow() } ?: Instant.now()
           when {
             ids != null && search?.isNotBlank() == true -> {
               val idList = validateIdList(ids).getOrThrow()
-              loeysingDAO.findLoeysingar(search).filter { it.id in idList }
+              loeysingDAO.findLoeysingar(search, instant).filter { it.id in idList }
             }
             search?.isNotBlank() == true -> {
-              loeysingDAO.findLoeysingar(search)
+              loeysingDAO.findLoeysingar(search, instant)
             }
             ids != null -> {
               val idList = validateIdList(ids).getOrThrow()
-              loeysingDAO.getLoeysingList(idList)
+              loeysingDAO.getLoeysingList(idList, instant)
             }
             else -> {
-              loeysingDAO.getLoeysingList()
+              loeysingDAO.getLoeysingList(atTime = instant)
             }
           }
         }
