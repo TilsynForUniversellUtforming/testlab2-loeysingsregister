@@ -1,5 +1,6 @@
 package no.uutilsynet.testlab2loeysingsregister
 
+import java.time.Instant
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
@@ -71,6 +72,31 @@ class ValidatorsKtTest {
     fun notNumbers() {
       val result = validateIdList("one,two")
       assertThat(result.isFailure).isTrue()
+      assertThat(result.exceptionOrNull()).isInstanceOf(IllegalArgumentException::class.java)
+    }
+  }
+
+  @DisplayName("validateInstant")
+  @Nested
+  inner class ValidateInstant {
+    @DisplayName("når vi validerer eit gyldig tidspunkt, så skal vi få success")
+    @Test
+    fun gyldigTidspunkt() {
+      val result = validateInstant("2021-01-01T00:00:00Z")
+      assertThat(result).isEqualTo(Result.success(Instant.parse("2021-01-01T00:00:00Z")))
+    }
+
+    @DisplayName("når vi validerer noko anna enn eit tidspunkt, så skal vi få failure")
+    @Test
+    fun ikkjeEitTidspunkt() {
+      val result = validateInstant("hello world")
+      assertThat(result.exceptionOrNull()).isInstanceOf(IllegalArgumentException::class.java)
+    }
+
+    @DisplayName("når vi validerer null, så skal vi få failure")
+    @Test
+    fun nullTidspunkt() {
+      val result = validateInstant(null)
       assertThat(result.exceptionOrNull()).isInstanceOf(IllegalArgumentException::class.java)
     }
   }

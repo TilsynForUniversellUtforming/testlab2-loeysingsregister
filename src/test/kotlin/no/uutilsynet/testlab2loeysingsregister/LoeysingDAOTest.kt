@@ -12,8 +12,6 @@ import org.springframework.boot.test.context.SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class LoeysingDAOTest(@Autowired val loeysingDAO: LoeysingDAO) {
 
-  val loeysingTestOrgNummer = "000000000"
-
   val idsToBeDeleted = mutableListOf<Int>()
 
   @AfterAll
@@ -27,11 +25,12 @@ class LoeysingDAOTest(@Autowired val loeysingDAO: LoeysingDAO) {
   fun getLoeysing() {
     val name = UUID.randomUUID().toString()
     val url = "https://www.$name.com"
-    val id = createLoeysing(name, url)
+    val orgnummer = generateOrgnummer()
+    val id = createLoeysing(name, url, orgnummer)
     val loeysing = loeysingDAO.getLoeysing(id)
     assertThat(loeysing?.namn).isEqualTo(name)
     assertThat(loeysing?.url?.toString()).isEqualTo(url)
-    assertThat(loeysing?.orgnummer).isEqualTo(loeysingTestOrgNummer)
+    assertThat(loeysing?.orgnummer).isEqualTo(orgnummer)
   }
 
   @Test
@@ -181,7 +180,7 @@ class LoeysingDAOTest(@Autowired val loeysingDAO: LoeysingDAO) {
       orgnummer: String = generateOrgnummer()
   ): Int {
     val id =
-        loeysingDAO.createLoeysing("to be updated", URI(url).toURL(), loeysingTestOrgNummer).also {
+        loeysingDAO.createLoeysing("to be updated", URI(url).toURL(), orgnummer).also {
           idsToBeDeleted += it
         }
     val loeysing = loeysingDAO.getLoeysing(id)!!
@@ -191,10 +190,10 @@ class LoeysingDAOTest(@Autowired val loeysingDAO: LoeysingDAO) {
 
   private fun generateOrgnummer(): String {
     val sevenRandomDigits: String = (1000000..9999999).random().toString()
-    return "$sevenRandomDigits${calculateChecksum(sevenRandomDigits)}"
+    return "$sevenRandomDigits${checksumDigit(sevenRandomDigits)}"
   }
 
-  private fun calculateChecksum(sevenDigits: String): String {
+  private fun checksumDigit(sevenDigits: String): String {
     val weights = listOf(3, 2, 7, 6, 5, 4, 3, 2)
     val sum = sevenDigits.mapIndexed { index, c -> c.toString().toInt() * weights[index] }.sum()
     return when (val remainder = sum % 11) {
@@ -203,7 +202,7 @@ class LoeysingDAOTest(@Autowired val loeysingDAO: LoeysingDAO) {
       }
       10 -> {
         val sevenRandomDigits: String = (1000000..9999999).random().toString()
-        calculateChecksum(sevenRandomDigits) // try again
+        checksumDigit(sevenRandomDigits) // try again
       }
       else -> {
         (11 - remainder).toString()
