@@ -2,6 +2,7 @@ package no.uutilsynet.testlab2loeysingsregister
 
 import java.net.URI
 import java.net.URL
+import java.time.Instant
 
 fun validateOrgNummer(s: String?): Result<String> = runCatching {
   requireNotNull(s) { "Organisasjonsnummer kan ikkje vere null" }
@@ -39,3 +40,6 @@ fun validateURL(s: String?): Result<URL> = runCatching {
 fun validateIdList(ids: String): Result<List<Int>> = runCatching {
   if (ids == "") emptyList() else ids.split(",").map { it.toInt() }
 }
+
+fun validateInstant(s: String?): Result<Instant> =
+    runCatching { Instant.parse(s) }.recoverCatching { throw IllegalArgumentException(it) }
