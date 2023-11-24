@@ -91,20 +91,24 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
                       select nextval('loeysing_id_seq') as id
                   )
                   insert into loeysing (id, namn, url, orgnummer, aktiv, original, tidspunkt)
-                  select id, :namn, :url, :orgnummer, true, id, now()
+                  select id, :namn, :url, :orgnummer, true, id, :tidspunkt
                   from cte
                   returning id
                   """,
-          mapOf("namn" to namn, "url" to url.toString(), "orgnummer" to orgnummer),
+          mapOf(
+              "namn" to namn,
+              "url" to url.toString(),
+              "orgnummer" to orgnummer,
+              "tidspunkt" to Timestamp.from(Instant.now())),
           Int::class.java)!!
     } else if (existing.aktiv == false) {
       jdbcTemplate.update(
           """
                 insert into loeysing (aktiv, original, tidspunkt)
-                values (true, :original, now())
+                values (true, :original, :tidspunkt)
             """
               .trimIndent(),
-          mapOf("original" to existing.original))
+          mapOf("original" to existing.original, "tidspunkt" to Timestamp.from(Instant.now())))
       existing.original
     } else {
       existing.original
@@ -139,23 +143,24 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
     jdbcTemplate.update(
         """
           insert into loeysing (namn, url, orgnummer, original, tidspunkt)
-          values (:namn, :url, :orgnummer, :original, now())
+          values (:namn, :url, :orgnummer, :original, :tidspunkt)
         """
             .trimIndent(),
         mapOf(
             "namn" to diff.namn,
             "url" to diff.url?.toString(),
             "orgnummer" to diff.orgnummer,
-            "original" to latest.id))
+            "original" to latest.id,
+            "tidspunkt" to Timestamp.from(Instant.now())))
   }
 
   fun delete(id: Int) {
     jdbcTemplate.update(
         """
               insert into loeysing (aktiv, original, tidspunkt)
-              values (false, :id, now())
+              values (false, :id, :tidspunkt)
           """
             .trimIndent(),
-        mapOf("id" to id))
+        mapOf("id" to id, "tidspunkt" to Timestamp.from(Instant.now())))
   }
 }
