@@ -73,6 +73,7 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
             select distinct original
             from loeysing
             where lower(namn) like lower(:search)
+            or lower(url) like lower(:search)
             or orgnummer like :search
         """
                 .trimIndent(),
