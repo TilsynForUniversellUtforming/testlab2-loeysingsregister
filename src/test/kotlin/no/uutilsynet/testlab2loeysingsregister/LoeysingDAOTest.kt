@@ -3,6 +3,8 @@ package no.uutilsynet.testlab2loeysingsregister
 import java.net.URI
 import java.time.Instant
 import java.util.*
+import no.uutilsynet.testlab2loeysingsregister.loeysing.Loeysing
+import no.uutilsynet.testlab2loeysingsregister.loeysing.LoeysingDAO
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.*
 import org.springframework.beans.factory.annotation.Autowired

@@ -1,7 +1,8 @@
-package no.uutilsynet.testlab2loeysingsregister
+package no.uutilsynet.testlab2loeysingsregister.loeysing
 
 import java.net.URI
 import java.time.Instant
+import no.uutilsynet.testlab2loeysingsregister.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
