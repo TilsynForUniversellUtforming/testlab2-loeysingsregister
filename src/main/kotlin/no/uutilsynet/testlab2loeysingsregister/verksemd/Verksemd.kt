@@ -6,7 +6,7 @@ import kotlin.reflect.full.memberProperties
 data class Verksemd(
     val verksemdId: Int,
     val namn: String,
-    val organisasjonsnummer: String,
+    val orgnummer: String,
     val institusjonellSektorkode: String,
     val institusjonellSektorkodeBeskrivelse: String,
     val naeringskode: String,
@@ -17,7 +17,7 @@ data class Verksemd(
     val fylke: String,
     val kommune: String,
     val kommunenummer: Int,
-    val postnummer: String,
+    val postnummer: Int,
     val poststad: String,
     val talTilsette: Int,
     val forvaltningsnivaa: String,
@@ -25,7 +25,6 @@ data class Verksemd(
     val aktiv: Boolean = true,
     val original: Int,
     val tidspunkt: Instant = Instant.now(),
-
 )
 
 data class VerksemdDiff(
@@ -37,7 +36,7 @@ data class VerksemdDiff(
     val naeringskodeBeskrivelse: String?,
     val organisasjonsformKode: String?,
     val organsisasjonsformOmtale: String?,
-    val fylkesnummer: Int?,
+    val fylkesnummer: Int,
     val fylke: String?,
     val kommune: String?,
     val kommunenummer: Int?,
@@ -48,28 +47,46 @@ data class VerksemdDiff(
     val tenesteromraade: String?
 )
 
-fun diff(a: Verksemd, b: Verksemd): VerksemdDiff =
-    Verksemd::class
-        .memberProperties
-        .filter { it.get(a).toString() != it.get(b).toString() }
-        .associate { it.name to it.get(b) }
-        .let {
-          VerksemdDiff(
-              it["namn"] as String?,
-              it["organisasjonsnummer"] as String?,
-              it["institusjonellSektorkode"] as String?,
-              it["institusjonellSektorkodeBeskrivelse"] as String?,
-              it["naeringskode"] as String?,
-              it["naeringskodeBeskrivelse"] as String?,
-              it["organisasjonsformKode"] as String?,
-              it["organsisasjonsformOmtale"] as String?,
-              it["fylkesnummer"] as Int?,
-              it["fylke"] as String?,
-              it["kommune"] as String?,
-              it["kommunenummer"] as Int?,
-              it["postnummer"] as String?,
-              it["poststad"] as String?,
-              it["talTilsette"] as Int?,
-              it["forvaltningsnivaa"] as String?,
-              it["tenesteromraade"] as String?)
-        }
+data class NyVerksemd(
+    val namn: String,
+    val orgnummer: String,
+    val institusjonellSektorkode: String,
+    val institusjonellSektorkodeBeskrivelse: String,
+    val naeringskode: String,
+    val naeringskodeBeskrivelse: String,
+    val organisasjonsformKode: String,
+    val organsisasjonsformOmtale: String,
+    val fylkesnummer: Int = 0,
+    val fylke: String = "",
+    val kommune: String,
+    val kommunenummer: Int,
+    val postnummer: Int,
+    val poststad: String,
+    val talTilsette: Int,
+    val forvaltningsnivaa: String,
+    val tenesteromraade: String,
+    val aktiv: Boolean = true,
+    val original: Int,
+    val tidspunkt: Instant = Instant.now()
+) {
+    constructor(brregVerksemd: BrregVerksemd) : this( namn = brregVerksemd.navn,
+        orgnummer = brregVerksemd.organisasjonsnummer,
+        institusjonellSektorkode = brregVerksemd.institusjonellSektorkode.kode,
+        institusjonellSektorkodeBeskrivelse = brregVerksemd.institusjonellSektorkode.beskrivelse,
+        naeringskode = brregVerksemd.naeringskode1.kode,
+        naeringskodeBeskrivelse = brregVerksemd.naeringskode1.beskrivelse,
+        organisasjonsformKode = brregVerksemd.organisasjonsform.kode,
+        organsisasjonsformOmtale = brregVerksemd.organisasjonsform.beskrivelse,
+        fylkesnummer = 0,
+        fylke = "",
+        kommunenummer = brregVerksemd.forretningsadresse.kommunenummer,
+        kommune = brregVerksemd.forretningsadresse.kommune,
+        postnummer = brregVerksemd.forretningsadresse.postnummer,
+        poststad = brregVerksemd.forretningsadresse.poststed,
+        talTilsette = brregVerksemd.antallAnsatte,
+        forvaltningsnivaa = brregVerksemd.forretningsadresse.kommune,
+        tenesteromraade = brregVerksemd.forretningsadresse.kommune,
+        aktiv = true,
+        original = 1) {}
+
+    }
