@@ -1,10 +1,9 @@
 package no.uutilsynet.testlab2loeysingsregister.verksemd
 
 import java.time.Instant
-import kotlin.reflect.full.memberProperties
 
 data class Verksemd(
-    val verksemdId: Int,
+    val id: Int,
     val namn: String,
     val orgnummer: String,
     val institusjonellSektorkode: String,
@@ -69,24 +68,26 @@ data class NyVerksemd(
     val original: Int,
     val tidspunkt: Instant = Instant.now()
 ) {
-    constructor(brregVerksemd: BrregVerksemd) : this( namn = brregVerksemd.navn,
-        orgnummer = brregVerksemd.organisasjonsnummer,
-        institusjonellSektorkode = brregVerksemd.institusjonellSektorkode.kode,
-        institusjonellSektorkodeBeskrivelse = brregVerksemd.institusjonellSektorkode.beskrivelse,
-        naeringskode = brregVerksemd.naeringskode1.kode,
-        naeringskodeBeskrivelse = brregVerksemd.naeringskode1.beskrivelse,
-        organisasjonsformKode = brregVerksemd.organisasjonsform.kode,
-        organsisasjonsformOmtale = brregVerksemd.organisasjonsform.beskrivelse,
-        fylkesnummer = 0,
-        fylke = "",
-        kommunenummer = brregVerksemd.forretningsadresse.kommunenummer,
-        kommune = brregVerksemd.forretningsadresse.kommune,
-        postnummer = brregVerksemd.forretningsadresse.postnummer,
-        poststad = brregVerksemd.forretningsadresse.poststed,
-        talTilsette = brregVerksemd.antallAnsatte,
-        forvaltningsnivaa = brregVerksemd.forretningsadresse.kommune,
-        tenesteromraade = brregVerksemd.forretningsadresse.kommune,
-        aktiv = true,
-        original = 1) {}
-
-    }
+  constructor(
+      brregVerksemd: BrregVerksemd
+  ) : this(
+      namn = brregVerksemd.navn,
+      orgnummer = brregVerksemd.organisasjonsnummer,
+      institusjonellSektorkode = brregVerksemd.institusjonellSektorkode.kode,
+      institusjonellSektorkodeBeskrivelse = brregVerksemd.institusjonellSektorkode.beskrivelse,
+      naeringskode = brregVerksemd.naeringskode1.kode,
+      naeringskodeBeskrivelse = brregVerksemd.naeringskode1.beskrivelse,
+      organisasjonsformKode = brregVerksemd.organisasjonsform.kode,
+      organsisasjonsformOmtale = brregVerksemd.organisasjonsform.beskrivelse,
+      fylkesnummer = 0,
+      fylke = "",
+      kommunenummer = brregVerksemd.forretningsadresse.kommunenummer,
+      kommune = brregVerksemd.forretningsadresse.kommune,
+      postnummer = brregVerksemd.forretningsadresse.postnummer,
+      poststad = brregVerksemd.forretningsadresse.poststed,
+      talTilsette = brregVerksemd.antallAnsatte,
+      forvaltningsnivaa = brregVerksemd.forretningsadresse.kommune,
+      tenesteromraade = brregVerksemd.forretningsadresse.kommune,
+      aktiv = true,
+      original = 1) {}
+}
