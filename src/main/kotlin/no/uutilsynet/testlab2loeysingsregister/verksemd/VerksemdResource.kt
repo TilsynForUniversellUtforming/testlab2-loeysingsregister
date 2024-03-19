@@ -43,7 +43,7 @@ class VerksemdResource(val verksemdDAO: VerksemdDAO) {
         .createVerksemd(verksemd)
         .also { logger.info("lagra verksemd (${verksemd.namn}, ${verksemd.orgnummer})") }
         .let {
-          val nyVerksemd = verksemdDAO.getVerksemd(it.getOrThrow());
+          val nyVerksemd = verksemdDAO.getVerksemd(it.getOrThrow())
           return ResponseEntity.ok(nyVerksemd)
         }
   }

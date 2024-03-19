@@ -1,20 +1,19 @@
 package no.uutilsynet.testlab2loeysingsregister.verksemd
 
-import org.slf4j.LoggerFactory
+import java.sql.Timestamp
 import java.time.Instant
+import org.slf4j.LoggerFactory
 import org.springframework.jdbc.core.DataClassRowMapper
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
-import java.sql.Timestamp
 
 @Component
 class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
 
-    val logger = LoggerFactory.getLogger(VerksemdDAO::class.java)
+  val logger = LoggerFactory.getLogger(VerksemdDAO::class.java)
 
-
-    val insertVerksemdSql =
+  val insertVerksemdSql =
       """
             insert into verksemd(namn,
             orgnummer,
@@ -60,44 +59,42 @@ class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
         """
           .trimIndent()
 
-    @Transactional
-    fun createVerksemd(verksemd: NyVerksemd): Result<Int> {
-        return runCatching {
-            val existing = exisitingVerksemd(verksemd.orgnummer)
-            logger.info("Existing verksemd: $existing")
+  @Transactional
+  fun createVerksemd(verksemd: NyVerksemd): Result<Int> {
+    return runCatching {
+          val existing = exisitingVerksemd(verksemd.orgnummer)
+          logger.info("Existing verksemd: $existing")
 
-            val params = verksemdParamsMap(verksemd, existing, aktiv = true);
+          val params = verksemdParamsMap(verksemd, existing, aktiv = true)
 
-            jdbcTemplate.queryForObject(
-                insertVerksemdSql, params, Int::class.java
-            )?: throw Exception("Oppretting av verksemd ${verksemd.orgnummer} feila")
-        }.fold(
-            onSuccess = { id -> Result.success(id) },
-            onFailure = { e -> Result.failure(e) })
-    }
+          jdbcTemplate.queryForObject(insertVerksemdSql, params, Int::class.java)
+              ?: throw Exception("Oppretting av verksemd ${verksemd.orgnummer} feila")
+        }
+        .fold(onSuccess = { id -> Result.success(id) }, onFailure = { e -> Result.failure(e) })
+  }
 
+  @Transactional
+  fun updateVerksemd(verksemd: Verksemd): Result<Int> {
+    return runCatching {
+          val existing = exisitingVerksemd(verksemd.orgnummer)
 
-    @Transactional
-    fun updateVerksemd(verksemd: Verksemd): Result<Int> {
-        return runCatching {
-            val existing = exisitingVerksemd(verksemd.orgnummer)
-
-            if (existing != 0) {
-                val sql =
-                    """
+          if (existing != 0) {
+            val sql =
+                """
             update verksemd
             set aktiv = :aktiv
             where id=:existing
         """
-                        .trimIndent()
+                    .trimIndent()
 
-                jdbcTemplate.update(sql, mapOf("aktiv" to false, "existing" to existing))
-            }
-            createVerksemd(verksemd.copy(original = existing).toNyVerksemd())
-        }.fold(
+            jdbcTemplate.update(sql, mapOf("aktiv" to false, "existing" to existing))
+          }
+          createVerksemd(verksemd.copy(original = existing).toNyVerksemd())
+        }
+        .fold(
             onSuccess = { id -> Result.success(id.getOrThrow()) },
             onFailure = { e -> Result.failure(e) })
-    }
+  }
 
   fun getVerksemd(id: Int, atTime: Instant = Instant.now()): Verksemd? {
     val sql =
@@ -112,7 +109,32 @@ class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
             .trimIndent()
 
     return jdbcTemplate.queryForObject(
-        sql, mapOf("atTime" to atTime), DataClassRowMapper.newInstance(Verksemd::class.java))
+        sql,
+        mapOf("id" to id, "atTime" to Timestamp.from(atTime)),
+        DataClassRowMapper.newInstance(Verksemd::class.java))
+  }
+
+  fun getVerksemdByOrgnummer(
+      orgnummer: String,
+      aktiv: Boolean = true,
+      atTime: Instant = Instant.now()
+  ): Verksemd? {
+    val sql =
+        """
+                select *
+                from verksemd
+                where orgnummer =:orgnummer
+                and aktiv = :aktiv
+                and tidspunkt <= :atTime
+                order by tidspunkt desc
+                fetch first 1 row only
+            """
+            .trimIndent()
+
+    return return jdbcTemplate.queryForObject(
+        sql,
+        mapOf("orgnummer" to orgnummer, "aktiv" to aktiv, "atTime" to Timestamp.from(atTime)),
+        DataClassRowMapper.newInstance(Verksemd::class.java))
   }
 
   fun getVerksemder(atTime: Instant = Instant.now()): List<Verksemd> {
@@ -129,16 +151,18 @@ class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
             .trimIndent()
 
     return jdbcTemplate.query(
-        sql, mapOf("atTime" to atTime), DataClassRowMapper.newInstance(Verksemd::class.java))
+        sql,
+        mapOf("atTime" to Timestamp.from(atTime)),
+        DataClassRowMapper.newInstance(Verksemd::class.java))
   }
 
   @Transactional
-  fun deleteVerksemd(id: Int): Int {
+  fun deleteVerksemd(id: Int): Result<Int> {
     val last: Verksemd? = getVerksemd(id)
     if (last != null) {
-      return jdbcTemplate.update(insertVerksemdSql, verksemdParamsMap(last.toNyVerksemd(), last.original, false))
+      return Result.success(updateVerksemd(last.copy(aktiv = false)).fold({ it }, { throw it }))
     }
-    return 0
+    return Result.failure(Exception("Verksemd med id $id finst ikkje"))
   }
 
   private fun exisitingVerksemd(orgnummer: String): Int {
@@ -182,32 +206,30 @@ class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
         "tenesteromraade" to verksemd.tenesteromraade,
         "aktiv" to aktiv,
         "original" to original,
-        "tidspunkt" to Timestamp.from(Instant.now())
-      )
+        "tidspunkt" to Timestamp.from(Instant.now()))
   }
 
-    fun Verksemd.toNyVerksemd(): NyVerksemd {
-        return NyVerksemd(
-            namn = namn,
-            orgnummer = orgnummer,
-            institusjonellSektorkode = institusjonellSektorkode,
-            institusjonellSektorkodeBeskrivelse = institusjonellSektorkodeBeskrivelse,
-            naeringskode = naeringskode,
-            naeringskodeBeskrivelse = naeringskodeBeskrivelse,
-            organisasjonsformKode = organisasjonsformKode,
-            organsisasjonsformOmtale = organsisasjonsformOmtale,
-            fylkesnummer = fylkesnummer,
-            fylke = fylke,
-            kommunenummer = kommunenummer,
-            kommune = kommune,
-            postnummer = postnummer,
-            poststad = poststad,
-            talTilsette = talTilsette,
-            forvaltningsnivaa = forvaltningsnivaa,
-            tenesteromraade = tenesteromraade,
-            aktiv = aktiv,
-            original = original,
-            tidspunkt = tidspunkt
-        )
-    }
+  fun Verksemd.toNyVerksemd(): NyVerksemd {
+    return NyVerksemd(
+        namn = namn,
+        orgnummer = orgnummer,
+        institusjonellSektorkode = institusjonellSektorkode,
+        institusjonellSektorkodeBeskrivelse = institusjonellSektorkodeBeskrivelse,
+        naeringskode = naeringskode,
+        naeringskodeBeskrivelse = naeringskodeBeskrivelse,
+        organisasjonsformKode = organisasjonsformKode,
+        organsisasjonsformOmtale = organsisasjonsformOmtale,
+        fylkesnummer = fylkesnummer,
+        fylke = fylke,
+        kommunenummer = kommunenummer,
+        kommune = kommune,
+        postnummer = postnummer,
+        poststad = poststad,
+        talTilsette = talTilsette,
+        forvaltningsnivaa = forvaltningsnivaa,
+        tenesteromraade = tenesteromraade,
+        aktiv = aktiv,
+        original = original,
+        tidspunkt = tidspunkt)
+  }
 }
