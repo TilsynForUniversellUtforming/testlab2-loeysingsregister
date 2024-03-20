@@ -65,7 +65,7 @@ class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
           val existing = exisitingVerksemd(verksemd.orgnummer)
           logger.info("Existing verksemd: $existing")
 
-          val params = verksemdParamsMap(verksemd, existing, aktiv = true)
+          val params = verksemdParamsMap(verksemd, existing)
 
           jdbcTemplate.queryForObject(insertVerksemdSql, params, Int::class.java)
               ?: throw Exception("Oppretting av verksemd ${verksemd.orgnummer} feila")
@@ -74,7 +74,7 @@ class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
   }
 
   @Transactional
-  fun updateVerksemd(verksemd: Verksemd): Result<Int> {
+  fun updateVerksemd(verksemd: Verksemd, updateAktiv: Boolean = true): Result<Int> {
     return runCatching {
           val existing = exisitingVerksemd(verksemd.orgnummer)
 
@@ -87,9 +87,9 @@ class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
         """
                     .trimIndent()
 
-            jdbcTemplate.update(sql, mapOf("aktiv" to false, "existing" to existing))
+            jdbcTemplate.update(sql, mapOf("aktiv" to !updateAktiv, "existing" to existing))
           }
-          createVerksemd(verksemd.copy(original = existing).toNyVerksemd())
+          createVerksemd(verksemd.copy(original = existing, aktiv = updateAktiv).toNyVerksemd())
         }
         .fold(
             onSuccess = { id -> Result.success(id.getOrThrow()) },
@@ -114,45 +114,44 @@ class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
         DataClassRowMapper.newInstance(Verksemd::class.java))
   }
 
-  fun getVerksemdByOrgnummer(
-      orgnummer: String,
-      aktiv: Boolean = true,
-      atTime: Instant = Instant.now()
-  ): Verksemd? {
+  fun getVerksemdByOrgnummer(orgnummer: String, atTime: Instant = Instant.now()): Verksemd? {
     val sql =
         """
                 select *
                 from verksemd
                 where orgnummer =:orgnummer
-                and aktiv = :aktiv
                 and tidspunkt <= :atTime
                 order by tidspunkt desc
                 fetch first 1 row only
             """
             .trimIndent()
 
-    return return jdbcTemplate.queryForObject(
+    return jdbcTemplate.queryForObject(
         sql,
-        mapOf("orgnummer" to orgnummer, "aktiv" to aktiv, "atTime" to Timestamp.from(atTime)),
+        mapOf("orgnummer" to orgnummer, "atTime" to Timestamp.from(atTime)),
         DataClassRowMapper.newInstance(Verksemd::class.java))
   }
 
-  fun getVerksemder(atTime: Instant = Instant.now()): List<Verksemd> {
+  fun getVerksemder(atTime: Instant = Instant.now(), aktiv: Boolean = true): List<Verksemd> {
     val sql =
         """
             select *
             from verksemd
-            where 
-            aktiv = true
+            where id not in (
+            select distinct original 
+				from verksemd  
+				where tidspunkt < :atTime)
+            and
+            aktiv = :aktiv
             and 
-            tidspunkt <= :atTime
+            tidspunkt < :atTime
             order by tidspunkt desc
         """
             .trimIndent()
 
     return jdbcTemplate.query(
         sql,
-        mapOf("atTime" to Timestamp.from(atTime)),
+        mapOf("atTime" to Timestamp.from(atTime), "aktiv" to aktiv),
         DataClassRowMapper.newInstance(Verksemd::class.java))
   }
 
@@ -160,7 +159,7 @@ class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
   fun deleteVerksemd(id: Int): Result<Int> {
     val last: Verksemd? = getVerksemd(id)
     if (last != null) {
-      return Result.success(updateVerksemd(last.copy(aktiv = false)).fold({ it }, { throw it }))
+      return Result.success(updateVerksemd(last, false).fold({ it }, { throw it }))
     }
     return Result.failure(Exception("Verksemd med id $id finst ikkje"))
   }
@@ -181,11 +180,7 @@ class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
         ?: 0
   }
 
-  private fun verksemdParamsMap(
-      verksemd: NyVerksemd,
-      original: Int,
-      aktiv: Boolean
-  ): Map<String, Any> {
+  private fun verksemdParamsMap(verksemd: NyVerksemd, original: Int): Map<String, Any> {
     return mapOf(
         "namn" to verksemd.namn,
         "orgnummer" to verksemd.orgnummer,
@@ -204,7 +199,7 @@ class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
         "tal_tilsette" to verksemd.talTilsette,
         "forvaltningsnivaa" to verksemd.forvaltningsnivaa,
         "tenesteromraade" to verksemd.tenesteromraade,
-        "aktiv" to aktiv,
+        "aktiv" to verksemd.aktiv,
         "original" to original,
         "tidspunkt" to Timestamp.from(Instant.now()))
   }
