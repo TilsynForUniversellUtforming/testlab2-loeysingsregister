@@ -49,12 +49,28 @@ class VerksemdResource(val verksemdDAO: VerksemdDAO) {
   }
 
   @PutMapping("/{id}")
-  fun updateVerksemd(@RequestBody verksemd: Verksemd) {
-    // TODO
+  fun updateVerksemd(@RequestBody verksemd: Verksemd): ResponseEntity<Verksemd> {
+    verksemdDAO
+        .updateVerksemd(verksemd, true)
+        .fold(
+            {
+              return ResponseEntity.ok(verksemd)
+            },
+            {
+              return ResponseEntity.notFound().build()
+            })
   }
 
   @DeleteMapping
-  fun deleteVerksemd(@PathVariable id: Int) {
-    // TODO
+  fun deleteVerksemd(@PathVariable id: Int): ResponseEntity<Int> {
+    verksemdDAO
+        .deleteVerksemd(id)
+        .fold(
+            {
+              return ResponseEntity.ok().build()
+            },
+            {
+              return ResponseEntity.notFound().build()
+            })
   }
 }
