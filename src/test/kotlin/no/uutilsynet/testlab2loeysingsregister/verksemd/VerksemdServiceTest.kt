@@ -18,8 +18,8 @@ class VerksemdServiceTest() {
     assert(result.isSuccess)
     val verksemd = result.getOrThrow()
     assert(verksemd.namn == "DIGITALISERINGSDIREKTORATET")
-    assert(verksemd.naeringskode == "84.110")
-    assert(verksemd.institusjonellSektorkode == "6100")
+    assert(verksemd.naeringskode.kode == "84.110")
+    assert(verksemd.institusjonellSektorKode.kode == "6100")
   }
 
   @Test
@@ -40,12 +40,12 @@ class TestVerksemdService : VerksemdService(BrregRegisterProperties("http://loca
         BrregVerksemd(
             "991825827",
             "DIGITALISERINGSDIREKTORATET",
-            BrregVerksemd.Organisasjonsform("84.110", "Organisasjonsledd"),
+            Organisasjonsform("84.110", "Organisasjonsledd"),
             BrregVerksemd.Postadresse("0114", "Oslo", "Oslo", "0301"),
-            BrregVerksemd.Naeringskode("84.110", "Generell offentlig administrasjon"),
+            Naeringskode("84.110", "Generell offentlig administrasjon"),
             390,
             "932384469",
             BrregVerksemd.Postadresse("0114", "Oslo", "Oslo", "0301"),
-            BrregVerksemd.InstitusjonellSektorkode("6100", "Statlig forvaltning")))
+            InstitusjonellSektorKode("6100", "Statlig forvaltning")))
   }
 }
