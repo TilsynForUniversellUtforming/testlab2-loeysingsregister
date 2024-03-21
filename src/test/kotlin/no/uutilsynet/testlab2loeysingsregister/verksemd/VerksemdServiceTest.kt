@@ -1,16 +1,15 @@
 package no.uutilsynet.testlab2loeysingsregister.verksemd
 
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class VerksemdServiceTest(@Autowired val verksemdService: VerksemdService) {
+class VerksemdServiceTest() {
 
-  @Disabled
+  val verksemdService = TestVerksemdService()
+
   @Test
   fun brregtoNyVerksemd() {
     val orgnummer = "991825827"
@@ -23,12 +22,30 @@ class VerksemdServiceTest(@Autowired val verksemdService: VerksemdService) {
     assert(verksemd.institusjonellSektorkode == "6100")
   }
 
-  @Disabled
   @Test
   fun getBrregDataNotFound() {
     val orgnummer = "123456789"
 
     val result = verksemdService.getBrregData(orgnummer)
     assert(result.isFailure)
+  }
+}
+
+class TestVerksemdService : VerksemdService(BrregRegisterProperties("http://localhost:8080")) {
+  override fun getBrregData(orgnummer: String): Result<BrregVerksemd> {
+    if (orgnummer != "991825827")
+        return Result.failure(Exception("Fant ikkje verksemd med orgnummer $orgnummer"))
+
+    return Result.success(
+        BrregVerksemd(
+            "991825827",
+            "DIGITALISERINGSDIREKTORATET",
+            BrregVerksemd.Organisasjonsform("84.110", "Organisasjonsledd"),
+            BrregVerksemd.Postadresse("0114", "Oslo", "Oslo", "0301"),
+            BrregVerksemd.Naeringskode("84.110", "Generell offentlig administrasjon"),
+            390,
+            "932384469",
+            BrregVerksemd.Postadresse("0114", "Oslo", "Oslo", "0301"),
+            BrregVerksemd.InstitusjonellSektorkode("6100", "Statlig forvaltning")))
   }
 }
