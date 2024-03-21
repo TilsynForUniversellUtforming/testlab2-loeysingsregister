@@ -1,13 +1,13 @@
 package no.uutilsynet.testlab2loeysingsregister.verksemd
 
 import org.slf4j.LoggerFactory
+import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 
 @Component
-class VerksemdService() {
+class VerksemdService(val properties: BrregRegisterProperties) {
 
-  val brregApi = "https://data.brreg.no/enhetsregisteret/api/enheter"
   val logger = LoggerFactory.getLogger(VerksemdService::class.java)
 
   fun getVerksemdData(orgnummer: String): Result<NyVerksemd> {
@@ -27,7 +27,7 @@ class VerksemdService() {
     val result = runCatching {
       WebClient.create()
           .get()
-          .uri("$brregApi/$orgnummer")
+          .uri("properties.url/$orgnummer")
           .retrieve()
           .bodyToMono(BrregVerksemd::class.java)
           .block()
@@ -43,3 +43,5 @@ class VerksemdService() {
         })
   }
 }
+
+@ConfigurationProperties(prefix = "brreg") data class BrregRegisterProperties(val url: String)
