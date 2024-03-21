@@ -15,10 +15,10 @@ data class BrregVerksemd(
   data class Organisasjonsform(val kode: String, val beskrivelse: String)
 
   data class Postadresse(
-      val postnummer: Int,
+      val postnummer: String,
       val poststed: String,
       val kommune: String,
-      val kommunenummer: Int
+      val kommunenummer: String
   )
 
   data class Naeringskode(val kode: String, val beskrivelse: String)
