@@ -9,11 +9,9 @@ data class BrregVerksemd(
     val antallAnsatte: Int,
     val overordnetEnhet: String?,
     val forretningsadresse: Postadresse,
-    val institusjonellSektorkode: InstitusjonellSektorkode,
+    val institusjonellSektorkode: InstitusjonellSektorKode,
     val underAvviking: Boolean = false
 ) {
-
-  data class Organisasjonsform(val kode: String, val beskrivelse: String)
 
   data class Postadresse(
       val postnummer: String,
@@ -21,8 +19,4 @@ data class BrregVerksemd(
       val kommune: String,
       val kommunenummer: String
   )
-
-  data class Naeringskode(val kode: String, val beskrivelse: String)
-
-  data class InstitusjonellSektorkode(val kode: String, val beskrivelse: String)
 }

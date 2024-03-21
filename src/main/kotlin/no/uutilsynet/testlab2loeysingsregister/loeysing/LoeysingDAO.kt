@@ -22,7 +22,8 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
       val orgnummer: String?,
       val aktiv: Boolean?,
       val original: Int,
-      val tidspunkt: Instant
+      val tidspunkt: Instant,
+      val verksemdId: Int?,
   )
 
   private fun combine(a: PartialLoeysing, b: PartialLoeysing): PartialLoeysing {
@@ -33,7 +34,8 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
         latest.orgnummer ?: earliest.orgnummer,
         latest.aktiv ?: earliest.aktiv,
         latest.original,
-        latest.tidspunkt)
+        latest.tidspunkt,
+        latest.verksemdId ?: earliest.verksemdId)
   }
 
   private fun getPartials(
@@ -52,7 +54,7 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
     val partials =
         jdbcTemplate.query(
             """
-              select namn, url, orgnummer, aktiv, original, tidspunkt
+              select namn, url, orgnummer, aktiv, original, tidspunkt, verksemd_id as verksemdId
               from loeysing
               where tidspunkt <= :atTime
               and $idFilter
@@ -72,7 +74,7 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
   fun getLoeysingList(idList: List<Int>? = null, atTime: Instant = Instant.now()): List<Loeysing> =
       getPartials(idList, atTime)
           .filter { it.aktiv!! }
-          .map { Loeysing(it.original, it.namn!!, URL(it.url!!), it.orgnummer!!) }
+          .map { Loeysing(it.original, it.namn!!, URL(it.url!!), it.orgnummer!!, it.verksemdId) }
 
   @Transactional
   fun findLoeysingar(searchTerm: String, atTime: Instant = Instant.now()): List<Loeysing> {
@@ -93,7 +95,7 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
   }
 
   @Transactional
-  fun createLoeysing(namn: String, url: URL, orgnummer: String): Int {
+  fun createLoeysing(namn: String, url: URL, orgnummer: String, verksemdId: Int?): Int {
     logger.debug("createLoeysing")
     val existing = findLoeysingByURLAndOrgnummer(url, orgnummer)
     logger.debug("Fant existing: {}", existing)
@@ -105,8 +107,8 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
                   with cte as (
                       select nextval('loeysing_id_seq') as id
                   )
-                  insert into loeysing (id, namn, url, orgnummer, aktiv, original, tidspunkt)
-                  select id, :namn, :url, :orgnummer, true, id, :tidspunkt
+                  insert into loeysing (id, namn, url, orgnummer, aktiv, original, tidspunkt,verksemd_id)
+                  select id, :namn, :url, :orgnummer, true, id, :tidspunkt, :verksemd_id
                   from cte
                   returning id
                   """,
@@ -114,7 +116,8 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
                   "namn" to namn,
                   "url" to url.toString(),
                   "orgnummer" to orgnummer,
-                  "tidspunkt" to Timestamp.from(Instant.now())),
+                  "tidspunkt" to Timestamp.from(Instant.now()),
+                  "verksemd_id" to verksemdId),
               Int::class.java)!!
       logger.debug("Opprettet løsying med id: {}", id)
       id
@@ -122,11 +125,14 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
       logger.debug("Reaktiverer løysing")
       jdbcTemplate.update(
           """
-                insert into loeysing (aktiv, original, tidspunkt)
-                values (true, :original, :tidspunkt)
+                insert into loeysing (aktiv, original, tidspunkt, verksemd_id)
+                values (true, :original, :tidspunkt, :verksemd_id)
             """
               .trimIndent(),
-          mapOf("original" to existing.original, "tidspunkt" to Timestamp.from(Instant.now())))
+          mapOf(
+              "original" to existing.original,
+              "tidspunkt" to Timestamp.from(Instant.now()),
+              "verksemd_id" to existing.verksemdId))
       existing.original
     } else {
       logger.debug("Løysing er aktiv")
@@ -165,8 +171,8 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
     val diff = diff(latest, updated)
     jdbcTemplate.update(
         """
-          insert into loeysing (namn, url, orgnummer, original, tidspunkt)
-          values (:namn, :url, :orgnummer, :original, :tidspunkt)
+          insert into loeysing (namn, url, orgnummer, original, tidspunkt,verksemd_id)
+          values (:namn, :url, :orgnummer, :original, :tidspunkt, :verksemdId)
         """
             .trimIndent(),
         mapOf(
@@ -174,7 +180,8 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
             "url" to diff.url?.toString(),
             "orgnummer" to diff.orgnummer,
             "original" to latest.id,
-            "tidspunkt" to Timestamp.from(Instant.now())))
+            "tidspunkt" to Timestamp.from(Instant.now()),
+            "verksemdId" to diff.verksemdId))
   }
 
   fun delete(id: Int) {
