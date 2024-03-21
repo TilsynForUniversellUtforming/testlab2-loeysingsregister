@@ -23,8 +23,9 @@ class VerksemdResource(val verksemdDAO: VerksemdDAO, val verksemdService: Verkse
   @GetMapping("/{id}")
   fun getVerksemd(@PathVariable id: Int, @RequestParam atTime: String?): ResponseEntity<Verksemd> {
     val instant = atTime?.let { validateInstant(atTime).getOrThrow() } ?: Instant.now()
-    return verksemdDAO.getVerksemd(id, instant)?.let { ResponseEntity.ok(it) }
-        ?: ResponseEntity.notFound().build()
+    return verksemdDAO
+        .getVerksemd(id, instant)
+        .fold({ ResponseEntity.ok(it) }, { ResponseEntity.notFound().build() })
   }
 
   @GetMapping
@@ -39,13 +40,13 @@ class VerksemdResource(val verksemdDAO: VerksemdDAO, val verksemdService: Verkse
 
   @PostMapping
   fun createVerksemd(@RequestBody nyVerksemd: NyVerksemdBase): ResponseEntity<Verksemd> {
-    val verksemd = verksemdService.getVerksemdData(nyVerksemd.orgnummer).getOrThrow()
+    val verksemd = verksemdService.getVerksemdData(nyVerksemd.organisasjonsnummer).getOrThrow()
     verksemdDAO
         .createVerksemd(verksemd)
-        .also { logger.info("lagra verksemd (${verksemd.namn}, ${verksemd.orgnummer})") }
+        .also { logger.info("lagra verksemd (${verksemd.namn}, ${verksemd.organisasjonsnummer})") }
         .let {
-          val nyVerksemd = verksemdDAO.getVerksemd(it.getOrThrow())
-          return ResponseEntity.ok(nyVerksemd)
+          val verksemd = verksemdDAO.getVerksemd(it.getOrThrow()).getOrThrow()
+          return ResponseEntity.ok(verksemd)
         }
   }
 

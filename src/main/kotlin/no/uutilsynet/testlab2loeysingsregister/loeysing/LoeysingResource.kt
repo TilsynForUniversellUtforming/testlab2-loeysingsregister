@@ -3,6 +3,7 @@ package no.uutilsynet.testlab2loeysingsregister.loeysing
 import java.net.URI
 import java.time.Instant
 import no.uutilsynet.testlab2loeysingsregister.*
+import no.uutilsynet.testlab2loeysingsregister.verksemd.VerksemdDAO
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
@@ -13,7 +14,7 @@ fun locationForId(id: Int): URI = URI("/v1/loeysing/${id}")
 
 @RestController
 @RequestMapping("v1/loeysing")
-class LoeysingResource(val loeysingDAO: LoeysingDAO) {
+class LoeysingResource(val loeysingDAO: LoeysingDAO, val verksemdDAO: VerksemdDAO) {
   val logger: Logger = LoggerFactory.getLogger(LoeysingResource::class.java)
 
   @PostMapping
@@ -22,8 +23,10 @@ class LoeysingResource(val loeysingDAO: LoeysingDAO) {
             val namn = validateNamn(body["namn"]).getOrThrow()
             val url = validateURL(body["url"]).getOrThrow()
             val orgnummer = validateOrgNummer(body["orgnummer"]).getOrThrow()
+            val verksemd = verksemdDAO.getVerksemdByOrgnummer(orgnummer).getOrNull()
+            val verksemdId = verksemd?.id
 
-            loeysingDAO.createLoeysing(namn, url, orgnummer).also {
+            loeysingDAO.createLoeysing(namn, url, orgnummer, verksemdId).also {
               logger.info("lagra løysing ($url, $orgnummer)")
             }
           }
@@ -92,7 +95,9 @@ class LoeysingResource(val loeysingDAO: LoeysingDAO) {
       runCatching {
             val namn = validateNamn(loeysing.namn).getOrThrow()
             val orgnummer = validateOrgNummer(loeysing.orgnummer).getOrThrow()
-            val validated = Loeysing(loeysing.id, namn, loeysing.url, orgnummer)
+            val verksemd = verksemdDAO.getVerksemdByOrgnummer(orgnummer).getOrNull()
+            val verksemdId = verksemd?.id
+            val validated = Loeysing(loeysing.id, namn, loeysing.url, orgnummer, verksemdId)
             loeysingDAO.update(validated).getOrThrow()
           }
           .fold(

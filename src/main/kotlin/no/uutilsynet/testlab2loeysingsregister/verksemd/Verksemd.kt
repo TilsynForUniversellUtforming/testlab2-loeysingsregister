@@ -5,19 +5,13 @@ import java.time.Instant
 data class Verksemd(
     val id: Int,
     val namn: String,
-    val orgnummer: String,
-    val institusjonellSektorkode: String,
-    val institusjonellSektorkodeBeskrivelse: String,
-    val naeringskode: String,
-    val naeringskodeBeskrivelse: String,
-    val organisasjonsformKode: String,
-    val organsisasjonsformOmtale: String,
-    val fylkesnummer: String,
-    val fylke: String,
-    val kommune: String,
-    val kommunenummer: String,
-    val postnummer: String?,
-    val poststad: String?,
+    val organisasjonsnummer: String,
+    val institusjonellSektorKode: InstitusjonellSektorKode,
+    val naeringskode: Naeringskode,
+    val organisasjonsform: Organisasjonsform,
+    val fylke: Fylke,
+    val kommune: Kommune,
+    val postadresse: Postadresse?,
     val talTilsette: Int,
     val forvaltningsnivaa: String?,
     val tenesteromraade: String?,
@@ -30,18 +24,12 @@ data class Verksemd(
 data class VerksemdDiff(
     val namn: String?,
     val organisasjonsnummer: String?,
-    val institusjonellSektorkode: String?,
-    val institusjonellSektorkodeBeskrivelse: String?,
-    val naeringskode: String?,
-    val naeringskodeBeskrivelse: String?,
-    val organisasjonsformKode: String?,
-    val organsisasjonsformOmtale: String?,
-    val fylkesnummer: Int,
-    val fylke: String?,
-    val kommune: String?,
-    val kommunenummer: Int?,
-    val postnummer: String?,
-    val poststad: String?,
+    val institusjonellSektorKode: InstitusjonellSektorKode,
+    val naeringskode: Naeringskode,
+    val organisasjonsform: Organisasjonsform,
+    val fylke: Fylke,
+    val kommune: Kommune,
+    val postadresse: Postadresse?,
     val talTilsette: Int?,
     val forvaltningsnivaa: String?,
     val tenesteromraade: String?,
@@ -50,19 +38,13 @@ data class VerksemdDiff(
 
 data class NyVerksemd(
     val namn: String,
-    val orgnummer: String,
-    val institusjonellSektorkode: String,
-    val institusjonellSektorkodeBeskrivelse: String,
-    val naeringskode: String,
-    val naeringskodeBeskrivelse: String,
-    val organisasjonsformKode: String,
-    val organsisasjonsformOmtale: String,
-    val fylkesnummer: String,
-    val fylke: String = "",
-    val kommune: String,
-    val kommunenummer: String,
-    val postnummer: String?,
-    val poststad: String?,
+    val organisasjonsnummer: String,
+    val institusjonellSektorKode: InstitusjonellSektorKode,
+    val naeringskode: Naeringskode,
+    val organisasjonsform: Organisasjonsform,
+    val fylke: Fylke,
+    val kommune: Kommune,
+    val postadresse: Postadresse?,
     val talTilsette: Int,
     val forvaltningsnivaa: String?,
     val tenesteromraade: String?,
@@ -71,26 +53,41 @@ data class NyVerksemd(
     val original: Int,
     val tidspunkt: Instant = Instant.now(),
 ) {
+
   constructor(
       brregVerksemd: BrregVerksemd
   ) : this(
       namn = brregVerksemd.navn,
-      orgnummer = brregVerksemd.organisasjonsnummer,
-      institusjonellSektorkode = brregVerksemd.institusjonellSektorkode.kode,
-      institusjonellSektorkodeBeskrivelse = brregVerksemd.institusjonellSektorkode.beskrivelse,
-      naeringskode = brregVerksemd.naeringskode1.kode,
-      naeringskodeBeskrivelse = brregVerksemd.naeringskode1.beskrivelse,
-      organisasjonsformKode = brregVerksemd.organisasjonsform.kode,
-      organsisasjonsformOmtale = brregVerksemd.organisasjonsform.beskrivelse,
-      fylkesnummer = "",
-      fylke = "",
-      kommunenummer = brregVerksemd.forretningsadresse.kommunenummer.toString(),
-      kommune = brregVerksemd.forretningsadresse.kommune,
-      postnummer = brregVerksemd.postadresse?.postnummer.toString(),
-      poststad = brregVerksemd.postadresse?.poststed.toString(),
-      talTilsette = brregVerksemd.antallAnsatte,
-      forvaltningsnivaa = null,
-      tenesteromraade = null,
+      organisasjonsnummer = brregVerksemd.organisasjonsnummer,
+      institusjonellSektorKode = brregVerksemd.institusjonellSektorkode,
+      naeringskode = brregVerksemd.naeringskode1,
+      organisasjonsform = brregVerksemd.organisasjonsform,
+      fylke = Fylke("", ""),
+      kommune =
+          Kommune(
+              brregVerksemd.forretningsadresse.kommunenummer,
+              brregVerksemd.forretningsadresse.kommune),
+      postadresse =
+          Postadresse(
+              brregVerksemd.forretningsadresse.postnummer,
+              brregVerksemd.forretningsadresse.poststed),
+      talTilsette = 0,
+      forvaltningsnivaa = "",
+      tenesteromraade = "",
+      underAvviking = false,
       aktiv = true,
-      original = 1) {}
+      original = 0,
+      tidspunkt = Instant.now())
 }
+
+data class Postadresse(val postnummer: String?, val poststad: String?)
+
+data class InstitusjonellSektorKode(val kode: String, val beskrivelse: String)
+
+data class Naeringskode(val kode: String, val beskrivelse: String)
+
+data class Organisasjonsform(val kode: String, val omtale: String)
+
+data class Fylke(val fylkesnummer: String, val fylke: String)
+
+data class Kommune(val kommunenummer: String, val kommune: String)
