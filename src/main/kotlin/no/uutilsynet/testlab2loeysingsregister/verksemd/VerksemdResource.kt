@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("v1/verksemd")
-class VerksemdResource(val verksemdDAO: VerksemdDAO) {
+class VerksemdResource(val verksemdDAO: VerksemdDAO, val verksemdService: VerksemdService) {
   val logger: Logger = LoggerFactory.getLogger(VerksemdResource::class.java)
 
   @GetMapping("/{id}")
@@ -38,7 +38,8 @@ class VerksemdResource(val verksemdDAO: VerksemdDAO) {
   }
 
   @PostMapping
-  fun createVerksemd(@RequestBody verksemd: NyVerksemd): ResponseEntity<Verksemd> {
+  fun createVerksemd(@RequestBody nyVerksemd: NyVerksemdBase): ResponseEntity<Verksemd> {
+    val verksemd = verksemdService.getVerksemdData(nyVerksemd.orgnummer).getOrThrow()
     verksemdDAO
         .createVerksemd(verksemd)
         .also { logger.info("lagra verksemd (${verksemd.namn}, ${verksemd.orgnummer})") }
