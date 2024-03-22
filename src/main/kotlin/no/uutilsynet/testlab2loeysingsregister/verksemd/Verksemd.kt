@@ -16,14 +16,15 @@ data class Verksemd(
     val fylke: String,
     val kommune: String,
     val kommunenummer: String,
-    val postnummer: String,
-    val poststad: String,
+    val postnummer: String?,
+    val poststad: String?,
     val talTilsette: Int,
-    val forvaltningsnivaa: String,
-    val tenesteromraade: String,
+    val forvaltningsnivaa: String?,
+    val tenesteromraade: String?,
     val aktiv: Boolean = true,
     val original: Int,
     val tidspunkt: Instant = Instant.now(),
+    val underAvviking: Boolean = false
 )
 
 data class VerksemdDiff(
@@ -43,7 +44,8 @@ data class VerksemdDiff(
     val poststad: String?,
     val talTilsette: Int?,
     val forvaltningsnivaa: String?,
-    val tenesteromraade: String?
+    val tenesteromraade: String?,
+    val underAvviking: Boolean = false
 )
 
 data class NyVerksemd(
@@ -59,14 +61,15 @@ data class NyVerksemd(
     val fylke: String = "",
     val kommune: String,
     val kommunenummer: String,
-    val postnummer: String,
-    val poststad: String,
+    val postnummer: String?,
+    val poststad: String?,
     val talTilsette: Int,
-    val forvaltningsnivaa: String,
-    val tenesteromraade: String,
+    val forvaltningsnivaa: String?,
+    val tenesteromraade: String?,
+    val underAvviking: Boolean = false,
     val aktiv: Boolean = true,
     val original: Int,
-    val tidspunkt: Instant = Instant.now()
+    val tidspunkt: Instant = Instant.now(),
 ) {
   constructor(
       brregVerksemd: BrregVerksemd
@@ -83,11 +86,11 @@ data class NyVerksemd(
       fylke = "",
       kommunenummer = brregVerksemd.forretningsadresse.kommunenummer.toString(),
       kommune = brregVerksemd.forretningsadresse.kommune,
-      postnummer = brregVerksemd.forretningsadresse.postnummer.toString(),
-      poststad = brregVerksemd.forretningsadresse.poststed,
+      postnummer = brregVerksemd.postadresse?.postnummer.toString(),
+      poststad = brregVerksemd.postadresse?.poststed.toString(),
       talTilsette = brregVerksemd.antallAnsatte,
-      forvaltningsnivaa = brregVerksemd.forretningsadresse.kommune,
-      tenesteromraade = brregVerksemd.forretningsadresse.kommune,
+      forvaltningsnivaa = null,
+      tenesteromraade = null,
       aktiv = true,
       original = 1) {}
 }

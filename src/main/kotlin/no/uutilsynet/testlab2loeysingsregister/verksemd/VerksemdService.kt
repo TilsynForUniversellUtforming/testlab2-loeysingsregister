@@ -19,18 +19,15 @@ class VerksemdService(val properties: BrregRegisterProperties) {
           return Result.success(NyVerksemd(brregVerksemd))
         },
         onFailure = {
-          return Result.failure(Exception("Fant ikkje verksemd med orgnummer $orgnummer"))
+          return Result.failure(Exception("Fant ikkje verksemd med orgnummer $orgnummer", it))
         })
   }
 
   fun getBrregData(orgnummer: String): Result<BrregVerksemd> {
+    val url = "${properties.url}/$orgnummer"
+
     val result = runCatching {
-      WebClient.create()
-          .get()
-          .uri("properties.url/$orgnummer")
-          .retrieve()
-          .bodyToMono(BrregVerksemd::class.java)
-          .block()
+      WebClient.create().get().uri(url).retrieve().bodyToMono(BrregVerksemd::class.java).block()
           ?: throw Exception("Fant ikkje verksemd med orgnummer $orgnummer")
     }
 
@@ -39,7 +36,7 @@ class VerksemdService(val properties: BrregRegisterProperties) {
           return Result.success(brregVerksemd)
         },
         onFailure = {
-          return Result.failure(Exception("Fant ikkje verksemd med orgnummer $orgnummer"))
+          return Result.failure(Exception("Fant ikkje verksemd med orgnummer $orgnummer", it))
         })
   }
 }
