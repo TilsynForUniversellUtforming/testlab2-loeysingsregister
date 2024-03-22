@@ -32,6 +32,7 @@ class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
             tal_tilsette,
             forvaltningsnivaa,
             tenesteromraade,
+            under_avviking,
             aktiv,
             original,
             tidspunkt)
@@ -52,6 +53,7 @@ class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
             :tal_tilsette,
             :forvaltningsnivaa,
             :tenesteromraade,
+            :under_avviking,
             :aktiv,
             :original,
             :tidspunkt) 
@@ -180,29 +182,29 @@ class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
         ?: 0
   }
 
-  private fun verksemdParamsMap(verksemd: NyVerksemd, original: Int): Map<String, Any> {
-    return mapOf(
-        "namn" to verksemd.namn,
-        "orgnummer" to verksemd.orgnummer,
-        "institusjonell_sektorkode" to verksemd.institusjonellSektorkode,
-        "institusjonell_sektorkode_beskrivelse" to verksemd.institusjonellSektorkodeBeskrivelse,
-        "naeringskode" to verksemd.naeringskode,
-        "naeringskode_beskrivelse" to verksemd.naeringskodeBeskrivelse,
-        "organisasjonsform_kode" to verksemd.organisasjonsformKode,
-        "organsisasjonsform_omtale" to verksemd.organsisasjonsformOmtale,
-        "fylkesnummer" to verksemd.fylkesnummer,
-        "fylke" to verksemd.fylke,
-        "kommunenummer" to verksemd.kommunenummer,
-        "kommune" to verksemd.kommune,
-        "postnummer" to verksemd.postnummer,
-        "poststad" to verksemd.poststad,
-        "tal_tilsette" to verksemd.talTilsette,
-        "forvaltningsnivaa" to verksemd.forvaltningsnivaa,
-        "tenesteromraade" to verksemd.tenesteromraade,
-        "aktiv" to verksemd.aktiv,
-        "original" to original,
-        "tidspunkt" to Timestamp.from(Instant.now()))
-  }
+  private fun verksemdParamsMap(verksemd: NyVerksemd, original: Int) =
+      mapOf(
+          "namn" to verksemd.namn,
+          "orgnummer" to verksemd.orgnummer,
+          "institusjonell_sektorkode" to verksemd.institusjonellSektorkode,
+          "institusjonell_sektorkode_beskrivelse" to verksemd.institusjonellSektorkodeBeskrivelse,
+          "naeringskode" to verksemd.naeringskode,
+          "naeringskode_beskrivelse" to verksemd.naeringskodeBeskrivelse,
+          "organisasjonsform_kode" to verksemd.organisasjonsformKode,
+          "organsisasjonsform_omtale" to verksemd.organsisasjonsformOmtale,
+          "fylkesnummer" to verksemd.fylkesnummer,
+          "fylke" to verksemd.fylke,
+          "kommunenummer" to verksemd.kommunenummer,
+          "kommune" to verksemd.kommune,
+          "postnummer" to verksemd.postnummer,
+          "poststad" to verksemd.poststad,
+          "tal_tilsette" to verksemd.talTilsette,
+          "forvaltningsnivaa" to verksemd.forvaltningsnivaa,
+          "tenesteromraade" to verksemd.tenesteromraade,
+          "under_avviking" to verksemd.underAvviking,
+          "aktiv" to verksemd.aktiv,
+          "original" to original,
+          "tidspunkt" to Timestamp.from(Instant.now()))
 
   fun Verksemd.toNyVerksemd(): NyVerksemd {
     return NyVerksemd(
@@ -223,6 +225,7 @@ class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
         talTilsette = talTilsette,
         forvaltningsnivaa = forvaltningsnivaa,
         tenesteromraade = tenesteromraade,
+        underAvviking = underAvviking,
         aktiv = aktiv,
         original = original,
         tidspunkt = tidspunkt)
