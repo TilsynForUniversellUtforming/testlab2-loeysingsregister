@@ -1,6 +1,9 @@
 package no.uutilsynet.testlab2loeysingsregister
 
 import java.net.URI
+import no.uutilsynet.testlab2loeysingsregister.loeysing.Loeysing
+import no.uutilsynet.testlab2loeysingsregister.loeysing.LoeysingDiff
+import no.uutilsynet.testlab2loeysingsregister.loeysing.diff
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested

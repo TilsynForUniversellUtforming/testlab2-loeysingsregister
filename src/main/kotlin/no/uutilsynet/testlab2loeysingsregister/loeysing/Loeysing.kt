@@ -1,4 +1,4 @@
-package no.uutilsynet.testlab2loeysingsregister
+package no.uutilsynet.testlab2loeysingsregister.loeysing
 
 import java.net.URL
 import kotlin.reflect.full.memberProperties
