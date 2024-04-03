@@ -99,8 +99,9 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
     logger.debug("Fant existing: {}", existing)
     return if (existing == null) {
       logger.debug("Oppretter ny løysing")
-      val id = jdbcTemplate.queryForObject(
-          """
+      val id =
+          jdbcTemplate.queryForObject(
+              """
                   with cte as (
                       select nextval('loeysing_id_seq') as id
                   )
@@ -109,14 +110,14 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
                   from cte
                   returning id
                   """,
-          mapOf(
-              "namn" to namn,
-              "url" to url.toString(),
-              "orgnummer" to orgnummer,
-              "tidspunkt" to Timestamp.from(Instant.now())),
-          Int::class.java)!!
-        logger.debug("Opprettet løsying med id: {}", id)
-        id
+              mapOf(
+                  "namn" to namn,
+                  "url" to url.toString(),
+                  "orgnummer" to orgnummer,
+                  "tidspunkt" to Timestamp.from(Instant.now())),
+              Int::class.java)!!
+      logger.debug("Opprettet løsying med id: {}", id)
+      id
     } else if (existing.aktiv == false) {
       logger.debug("Reaktiverer løysing")
       jdbcTemplate.update(
