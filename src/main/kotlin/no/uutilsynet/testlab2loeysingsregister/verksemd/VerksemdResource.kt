@@ -1,6 +1,7 @@
 package no.uutilsynet.testlab2loeysingsregister.verksemd
 
 import java.time.Instant
+import no.uutilsynet.testlab2loeysingsregister.validateIdList
 import no.uutilsynet.testlab2loeysingsregister.validateInstant
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -73,6 +74,42 @@ class VerksemdResource(val verksemdDAO: VerksemdDAO, val verksemdService: Verkse
             },
             {
               return ResponseEntity.notFound().build()
+            })
+  }
+
+  @GetMapping("list")
+  fun getMany(
+      @RequestParam ids: String?,
+      @RequestParam search: String?,
+      @RequestParam atTime: String?
+  ): ResponseEntity<List<Verksemd>> {
+    return runCatching {
+          val instant = atTime?.let { validateInstant(atTime).getOrThrow() } ?: Instant.now()
+          when {
+            ids != null && search?.isNotBlank() == true -> {
+              val idList = validateIdList(ids).getOrThrow()
+              verksemdDAO.findVerksemder(search, instant).filter { it.id in idList }
+            }
+            search?.isNotBlank() == true -> {
+              verksemdDAO.findVerksemder(search, instant)
+            }
+            ids != null -> {
+              val idList = validateIdList(ids).getOrThrow()
+              verksemdDAO.getVerksemder(idList, instant, true)
+            }
+            else -> {
+              verksemdDAO.getVerksemder(atTime = instant)
+            }
+          }
+        }
+        .fold(
+            { ResponseEntity.ok(it) },
+            { exception ->
+              logger.error("Feila då vi skulle hente løysingar", exception)
+              when (exception) {
+                is IllegalArgumentException -> ResponseEntity.badRequest().build()
+                else -> ResponseEntity.internalServerError().build()
+              }
             })
   }
 }

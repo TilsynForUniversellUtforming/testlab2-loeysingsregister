@@ -95,8 +95,11 @@ class LoeysingResource(val loeysingDAO: LoeysingDAO, val verksemdDAO: VerksemdDA
       runCatching {
             val namn = validateNamn(loeysing.namn).getOrThrow()
             val orgnummer = validateOrgNummer(loeysing.orgnummer).getOrThrow()
-            val verksemd = verksemdDAO.getVerksemdByOrgnummer(orgnummer).getOrNull()
-            val verksemdId = verksemd?.id
+            var verksemdId = loeysing.verksemdId
+
+            if (verksemdId == null) {
+              verksemdId = verksemdDAO.getVerksemdByOrgnummer(orgnummer).getOrNull()?.id
+            }
             val validated = Loeysing(loeysing.id, namn, loeysing.url, orgnummer, verksemdId)
             loeysingDAO.update(validated).getOrThrow()
           }
