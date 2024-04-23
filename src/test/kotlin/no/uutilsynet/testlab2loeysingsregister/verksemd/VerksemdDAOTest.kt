@@ -23,19 +23,13 @@ class VerksemdDAOTest(@Autowired val verksemdDAO: VerksemdDAO) {
     val nyVerksemd =
         NyVerksemd(
             namn = "Testverksemd",
-            orgnummer = orgnummer,
-            institusjonellSektorkode = "123",
-            institusjonellSektorkodeBeskrivelse = "Testsektor",
-            naeringskode = "123",
-            naeringskodeBeskrivelse = "Testnaering",
-            organisasjonsformKode = "123",
-            organsisasjonsformOmtale = "Testform",
-            fylkesnummer = "46",
-            fylke = "Testfylke",
-            kommunenummer = "4640",
-            kommune = "Testkommune",
-            postnummer = "123",
-            poststad = "Teststad",
+            organisasjonsnummer = orgnummer,
+            institusjonellSektorKode = InstitusjonellSektorKode("123", "Testsektor"),
+            naeringskode = Naeringskode("123", "Testnaering"), // "123", "Testnaering
+            organisasjonsform = Organisasjonsform("123", "Testform"),
+            fylke = Fylke("46", "Testfylke"),
+            kommune = Kommune("123", "Testkommune"),
+            postadresse = Postadresse("123", "Teststad"),
             talTilsette = 123,
             forvaltningsnivaa = "Testnivå",
             tenesteromraade = "Testområde",
@@ -44,16 +38,15 @@ class VerksemdDAOTest(@Autowired val verksemdDAO: VerksemdDAO) {
 
     val response = verksemdDAO.createVerksemd(nyVerksemd)
 
-    assertTrue(response.isSuccess)
     verksemdId = response.getOrThrow()
   }
 
   @Test
   @Order(2)
   fun getVerksemd() {
-    verksemdDAO.getVerksemd(verksemdId)?.let {
+    verksemdDAO.getVerksemd(verksemdId).onSuccess {
       assertEquals(it.namn, "Testverksemd")
-      assertEquals(it.orgnummer, "123456789")
+      assertEquals(it.organisasjonsnummer, "123456789")
       originalTimeStamp = it.tidspunkt
     }
   }
@@ -62,17 +55,17 @@ class VerksemdDAOTest(@Autowired val verksemdDAO: VerksemdDAO) {
   @Order(3)
   fun updateVerksemd() {
     val gamalVerksemd =
-        verksemdDAO.getVerksemd(verksemdId) ?: throw IllegalStateException("Verksemden finst ikkje")
+        verksemdDAO.getVerksemd(verksemdId).getOrThrow()
+            ?: throw IllegalStateException("Verksemden finst ikkje")
     val oppdatertVerksemd = gamalVerksemd.copy(namn = "Oppdatert verksemd")
     val nyId = verksemdDAO.updateVerksemd(oppdatertVerksemd).getOrThrow()
 
-    val hentaOppdatering = verksemdDAO.getVerksemd(nyId)
-    val gamalVersjon = verksemdDAO.getVerksemd(verksemdId, originalTimeStamp)
+    val hentaOppdatering = verksemdDAO.getVerksemd(nyId).getOrThrow()
+    val gamalVersjon = verksemdDAO.getVerksemd(verksemdId, originalTimeStamp).getOrThrow()
 
-    assertEquals(gamalVerksemd.orgnummer, hentaOppdatering?.orgnummer)
-    assertThat(hentaOppdatering?.tidspunkt).isAfter(originalTimeStamp)
-    assertThat(hentaOppdatering?.original).isEqualTo(verksemdId)
-    assertThat(gamalVersjon?.aktiv).isEqualTo(false)
+    assertEquals(gamalVerksemd.organisasjonsnummer, hentaOppdatering?.organisasjonsnummer)
+    assertThat(hentaOppdatering.tidspunkt).isAfter(originalTimeStamp)
+    assertThat(hentaOppdatering.original).isEqualTo(verksemdId)
     verksemdId = nyId
   }
 
@@ -89,19 +82,20 @@ class VerksemdDAOTest(@Autowired val verksemdDAO: VerksemdDAO) {
   @Test
   @Order(5)
   fun deleteVerksemd() {
-    verksemdDAO.deleteVerksemd(verksemdId).getOrThrow()
-    val slettaVerksemd = verksemdDAO.getVerksemdByOrgnummer(orgnummer)
+    val result = verksemdDAO.deleteVerksemd(verksemdId).getOrThrow()
+    assertThat(result).isGreaterThan(0)
+    val slettaVerksemd = verksemdDAO.getVerksemdByOrgnummer(orgnummer).getOrThrow()
 
-    val slettaTidspunkt = slettaVerksemd?.tidspunkt ?: Instant.now()
-    val gamalVersjon = verksemdDAO.getVerksemd(verksemdId)
-    assertThat(slettaVerksemd?.aktiv).isEqualTo(false)
-    assertThat(gamalVersjon?.aktiv).isEqualTo(true)
+    val slettaTidspunkt = slettaVerksemd.tidspunkt ?: Instant.now()
+    val gamalVersjon = verksemdDAO.getVerksemd(verksemdId).getOrThrow()
+    assertThat(slettaVerksemd.aktiv).isEqualTo(false)
+    assertThat(gamalVersjon.aktiv).isEqualTo(true)
     val listeUtanSletta = verksemdDAO.getVerksemder(Instant.now()).filter { it.id == verksemdId }
 
     assertThat(listeUtanSletta).isEmpty()
 
     val slettaFromOrgnummer = verksemdDAO.getVerksemdByOrgnummer(orgnummer)
-    assertThat(slettaFromOrgnummer == null)
+    assertThat(slettaFromOrgnummer.isFailure)
 
     val gamalListe = verksemdDAO.getVerksemder(slettaTidspunkt)
 

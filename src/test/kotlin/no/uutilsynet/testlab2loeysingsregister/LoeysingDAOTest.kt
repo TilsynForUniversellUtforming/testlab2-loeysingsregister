@@ -5,14 +5,19 @@ import java.time.Instant
 import java.util.*
 import no.uutilsynet.testlab2loeysingsregister.loeysing.Loeysing
 import no.uutilsynet.testlab2loeysingsregister.loeysing.LoeysingDAO
+import no.uutilsynet.testlab2loeysingsregister.verksemd.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.*
+import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.mock.mockito.MockBean
 
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class LoeysingDAOTest(@Autowired val loeysingDAO: LoeysingDAO) {
+
+  @MockBean lateinit var verksemdDAO: VerksemdDAO
 
   val idsToBeDeleted = mutableListOf<Int>()
 
@@ -28,6 +33,9 @@ class LoeysingDAOTest(@Autowired val loeysingDAO: LoeysingDAO) {
     val name = UUID.randomUUID().toString()
     val url = "https://www.$name.com"
     val orgnummer = generateOrgnummer()
+    val testVerksemd = getTestVerksemd(orgnummer)
+    Mockito.`when`(verksemdDAO.getVerksemdByOrgnummer(orgnummer))
+        .thenReturn(Result.success(testVerksemd))
     val id = createLoeysing(name, url, orgnummer)
     val loeysing = loeysingDAO.getLoeysing(id)
     assertThat(loeysing?.namn).isEqualTo(name)
@@ -179,12 +187,18 @@ class LoeysingDAOTest(@Autowired val loeysingDAO: LoeysingDAO) {
   private fun createLoeysing(
       name: String = UUID.randomUUID().toString(),
       url: String = "https://www.$name.com",
-      orgnummer: String = generateOrgnummer()
+      orgnummer: String = generateOrgnummer(),
+      verksemdId: Int = 1
   ): Int {
+    val testVerksemd = getTestVerksemd(orgnummer)
+    Mockito.`when`(verksemdDAO.getVerksemdByOrgnummer(orgnummer))
+        .thenReturn(Result.success(testVerksemd))
+
     val id =
-        loeysingDAO.createLoeysing("to be updated", URI(url).toURL(), orgnummer).also {
+        loeysingDAO.createLoeysing("to be updated", URI(url).toURL(), orgnummer, verksemdId).also {
           idsToBeDeleted += it
         }
+
     val loeysing = loeysingDAO.getLoeysing(id)!!
     loeysingDAO.update(loeysing.copy(namn = name))
     return id
@@ -210,5 +224,23 @@ class LoeysingDAOTest(@Autowired val loeysingDAO: LoeysingDAO) {
         (11 - remainder).toString()
       }
     }
+  }
+
+  private fun getTestVerksemd(orgnummer: String): Verksemd {
+    return Verksemd(
+        id = Math.random().toInt(),
+        namn = "Testverksemd",
+        organisasjonsnummer = orgnummer,
+        institusjonellSektorKode = InstitusjonellSektorKode("123", "Testsektor"),
+        naeringskode = Naeringskode("123", "Testnaering"), // "123", "Testnaering
+        organisasjonsform = Organisasjonsform("123", "Testform"),
+        fylke = Fylke("46", "Testfylke"),
+        kommune = Kommune("123", "Testkommune"),
+        postadresse = Postadresse("123", "Teststad"),
+        talTilsette = 123,
+        forvaltningsnivaa = "Testnivå",
+        tenesteromraade = "Testområde",
+        aktiv = true,
+        original = 1)
   }
 }
