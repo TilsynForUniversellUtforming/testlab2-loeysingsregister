@@ -18,37 +18,48 @@ class LoeysingKtTest {
     @Test
     fun toLike() {
       val loeysing =
-          Loeysing(1, "UUTilsynet", URI("https://www.uutilsynet.no/").toURL(), "991825827")
-      assertThat(diff(loeysing, loeysing)).isEqualTo(LoeysingDiff(null, null, null))
+          Loeysing(1, "UUTilsynet", URI("https://www.uutilsynet.no/").toURL(), "991825827", 1)
+      assertThat(diff(loeysing, loeysing)).isEqualTo(LoeysingDiff(null, null, null, null))
     }
 
     @DisplayName("når vi differ samme løysing med ulikt namn, så skal namnet vere endra")
     @Test
     fun uliktNamn() {
       val loeysing =
-          Loeysing(1, "UUTilsynet", URI("https://www.uutilsynet.no/").toURL(), "991825827")
-      val loeysing2 = Loeysing(1, "TUU", URI("https://www.uutilsynet.no/").toURL(), "991825827")
-      assertThat(diff(loeysing, loeysing2)).isEqualTo(LoeysingDiff("TUU", null, null))
+          Loeysing(1, "UUTilsynet", URI("https://www.uutilsynet.no/").toURL(), "991825827", 1)
+      val loeysing2 = Loeysing(1, "TUU", URI("https://www.uutilsynet.no/").toURL(), "991825827", 1)
+      assertThat(diff(loeysing, loeysing2)).isEqualTo(LoeysingDiff("TUU", null, null, null))
     }
 
     @DisplayName("når vi differ samme løysing med ulik url, så skal url vere endra")
     @Test
     fun ulikUrl() {
       val loeysing =
-          Loeysing(1, "UUTilsynet", URI("https://www.uutilsynet.no/").toURL(), "991825827")
-      val loeysing2 = Loeysing(1, "UUTilsynet", URI("https://www.digdir.no/").toURL(), "991825827")
+          Loeysing(1, "UUTilsynet", URI("https://www.uutilsynet.no/").toURL(), "991825827", 1)
+      val loeysing2 =
+          Loeysing(1, "UUTilsynet", URI("https://www.digdir.no/").toURL(), "991825827", 1)
       assertThat(diff(loeysing, loeysing2))
-          .isEqualTo(LoeysingDiff(null, URI("https://www.digdir.no/").toURL(), null))
+          .isEqualTo(LoeysingDiff(null, URI("https://www.digdir.no/").toURL(), null, null))
     }
 
     @DisplayName("når vi differ samme løysing med ulikt orgnummer, så skal orgnummer vere endra")
     @Test
     fun uliktOrgnummer() {
       val loeysing =
-          Loeysing(1, "UUTilsynet", URI("https://www.uutilsynet.no/").toURL(), "991825827")
+          Loeysing(1, "UUTilsynet", URI("https://www.uutilsynet.no/").toURL(), "991825827", 1)
       val loeysing2 =
-          Loeysing(1, "UUTilsynet", URI("https://www.uutilsynet.no/").toURL(), "123456785")
-      assertThat(diff(loeysing, loeysing2)).isEqualTo(LoeysingDiff(null, null, "123456785"))
+          Loeysing(1, "UUTilsynet", URI("https://www.uutilsynet.no/").toURL(), "123456785", 1)
+      assertThat(diff(loeysing, loeysing2)).isEqualTo(LoeysingDiff(null, null, "123456785", null))
+    }
+
+    @DisplayName("når vi differ samme løysing med ulik virksomhet, så skal virksomhet vere endra")
+    @Test
+    fun ulikVerksemd() {
+      val loeysing =
+          Loeysing(1, "UUTilsynet", URI("https://www.uutilsynet.no/").toURL(), "123456785", 1)
+      val loeysing2 =
+          Loeysing(1, "UUTilsynet", URI("https://www.uutilsynet.no/").toURL(), "123456785", 2)
+      assertThat(diff(loeysing, loeysing2)).isEqualTo(LoeysingDiff(null, null, null, 2))
     }
   }
 }
