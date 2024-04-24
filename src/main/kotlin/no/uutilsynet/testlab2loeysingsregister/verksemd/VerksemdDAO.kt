@@ -271,6 +271,10 @@ class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
                 and
                 (lower(namn) like lower(:search)
                 or lower(organisasjonsnummer) like lower(:search))
+                and id not in (
+                     select distinct original 
+	        		 from verksemd  
+				     where tidspunkt < :atTime)
                 order by tidspunkt desc
             """
             .trimIndent()
