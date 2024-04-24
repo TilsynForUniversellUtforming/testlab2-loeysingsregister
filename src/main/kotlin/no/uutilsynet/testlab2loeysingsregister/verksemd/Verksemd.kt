@@ -86,7 +86,7 @@ data class InstitusjonellSektorKode(val kode: String, val beskrivelse: String)
 
 data class Naeringskode(val kode: String, val beskrivelse: String)
 
-data class Organisasjonsform(val kode: String, val omtale: String)
+data class Organisasjonsform(val kode: String, val beskrivelse: String)
 
 data class Fylke(val fylkesnummer: String, val fylke: String)
 

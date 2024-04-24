@@ -22,7 +22,7 @@ class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
             naeringskode,
             naeringskode_beskrivelse,
             organisasjonsform_kode,
-            organisasjonsform_omtale,
+            organisasjonsform_beskrivelse,
             fylkesnummer,
             fylke,
             kommunenummer,
@@ -43,7 +43,7 @@ class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
             :naeringskode,
             :naeringskode_beskrivelse,
             :organisasjonsform_kode,
-            :organsisasjonsform_omtale,
+            :organisasjonsform_beskrivelse,
             :fylkesnummer,
             :fylke,
             :kommunenummer,
@@ -149,7 +149,8 @@ class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
             Naeringskode(rs.getString("naeringskode"), rs.getString("naeringskode_beskrivelse")),
         organisasjonsform =
             Organisasjonsform(
-                rs.getString("organisasjonsform_kode"), rs.getString("organisasjonsform_omtale")),
+                rs.getString("organisasjonsform_kode"),
+                rs.getString("organisasjonsform_beskrivelse")),
         fylke = Fylke(rs.getString("fylkesnummer"), rs.getString("fylke")),
         kommune = Kommune(rs.getString("kommunenummer"), rs.getString("kommune")),
         postadresse = Postadresse(rs.getString("postnummer"), rs.getString("poststad")),
@@ -186,6 +187,14 @@ class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
     }
   }
 
+  fun getVerksemder(
+      ids: List<Int>,
+      atTime: Instant = Instant.now(),
+      aktiv: Boolean = true
+  ): List<Verksemd> {
+    return getVerksemder(atTime, aktiv).filter { it.id in ids }
+  }
+
   @Transactional
   fun deleteVerksemd(id: Int): Result<Int> {
     return getVerksemd(id).mapCatching { updateVerksemd(it, false).getOrThrow() }
@@ -216,7 +225,7 @@ class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
           "naeringskode" to verksemd.naeringskode.kode,
           "naeringskode_beskrivelse" to verksemd.naeringskode.beskrivelse,
           "organisasjonsform_kode" to verksemd.organisasjonsform.kode,
-          "organsisasjonsform_omtale" to verksemd.organisasjonsform.omtale,
+          "organisasjonsform_beskrivelse" to verksemd.organisasjonsform.beskrivelse,
           "fylkesnummer" to verksemd.fylke.fylkesnummer,
           "fylke" to verksemd.fylke.fylke,
           "kommunenummer" to verksemd.kommune.kommunenummer,
@@ -248,5 +257,28 @@ class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
         aktiv = aktiv,
         original = original,
         tidspunkt = tidspunkt)
+  }
+
+  fun findVerksemder(searchTerm: String, atTime: Instant = Instant.now()): List<Verksemd> {
+    val search = "%$searchTerm%"
+
+    val sql =
+        """
+                select *
+                from verksemd
+                where tidspunkt <= :atTime
+                and aktiv = true 
+                and
+                (lower(namn) like lower(:search)
+                or lower(organisasjonsnummer) like lower(:search))
+                order by tidspunkt desc
+            """
+            .trimIndent()
+
+    return jdbcTemplate.query(sql, mapOf("search" to search, "atTime" to Timestamp.from(atTime))) {
+        rs,
+        _ ->
+      verksemdRowmapper(rs)
+    }
   }
 }
