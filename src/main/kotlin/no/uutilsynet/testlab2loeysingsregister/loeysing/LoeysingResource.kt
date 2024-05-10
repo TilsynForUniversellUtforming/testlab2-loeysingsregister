@@ -33,6 +33,7 @@ class LoeysingResource(
             val verksemdId =
                 if (verksemd != null) verksemd.id
                 else {
+                  logger.info("lagrar ny verksemd med orgnummer $orgnummer")
                   val nyVerksemd = verksemdService.getVerksemdData(orgnummer).getOrThrow()
                   verksemdDAO.createVerksemd(nyVerksemd).getOrThrow()
                 }
