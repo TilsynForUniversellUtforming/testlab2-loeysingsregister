@@ -19,7 +19,7 @@ class VerksemdService(val properties: BrregRegisterProperties) {
           return Result.success(NyVerksemd(brregVerksemd))
         },
         onFailure = {
-          return Result.failure(Exception("Fant ikkje verksemd med orgnummer $orgnummer", it))
+          return Result.success(createVerksemdUtanforBrreg(orgnummer))
         })
   }
 
@@ -38,6 +38,13 @@ class VerksemdService(val properties: BrregRegisterProperties) {
         onFailure = {
           return Result.failure(Exception("Fant ikkje verksemd med orgnummer $orgnummer", it))
         })
+  }
+
+  fun createVerksemdUtanforBrreg(orgnummer: String): NyVerksemd {
+    return NyVerksemd(
+        namn = "Virksomhet ikkje i brreg",
+        organisasjonsnummer = orgnummer,
+    )
   }
 }
 

@@ -78,6 +78,26 @@ data class NyVerksemd(
       aktiv = true,
       original = 0,
       tidspunkt = Instant.now())
+
+  constructor(
+      namn: String,
+      organisasjonsnummer: String
+  ) : this(
+      namn = namn,
+      organisasjonsnummer = organisasjonsnummer,
+      institusjonellSektorKode = InstitusjonellSektorKode("Utanfor Brreg", "Utanfor Brreg"),
+      naeringskode = Naeringskode("Utanfor Brreg", "Utanfor Brreg"),
+      organisasjonsform = Organisasjonsform("Utanfor Brreg", "Utanfor Brreg"),
+      fylke = Fylke("", ""),
+      kommune = Kommune("Utanfor Brreg", "Utanfor Brreg"),
+      postadresse = Postadresse("Utanfor Brreg", "Utanfor Brreg"),
+      talTilsette = 0,
+      forvaltningsnivaa = "",
+      tenesteromraade = "",
+      underAvviking = false,
+      aktiv = true,
+      original = 0,
+      tidspunkt = Instant.now())
 }
 
 data class Postadresse(val postnummer: String?, val poststad: String?)
