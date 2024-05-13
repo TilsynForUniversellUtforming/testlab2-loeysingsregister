@@ -4,7 +4,6 @@ import java.net.URI
 import java.time.Instant
 import no.uutilsynet.testlab2loeysingsregister.*
 import no.uutilsynet.testlab2loeysingsregister.verksemd.VerksemdDAO
-import no.uutilsynet.testlab2loeysingsregister.verksemd.VerksemdService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
@@ -15,11 +14,7 @@ fun locationForId(id: Int): URI = URI("/v1/loeysing/${id}")
 
 @RestController
 @RequestMapping("v1/loeysing")
-class LoeysingResource(
-    val loeysingDAO: LoeysingDAO,
-    val verksemdDAO: VerksemdDAO,
-    private val verksemdService: VerksemdService
-) {
+class LoeysingResource(val loeysingDAO: LoeysingDAO, val verksemdDAO: VerksemdDAO) {
   val logger: Logger = LoggerFactory.getLogger(LoeysingResource::class.java)
 
   @PostMapping
@@ -28,15 +23,8 @@ class LoeysingResource(
             val namn = validateNamn(body["namn"]).getOrThrow()
             val url = validateURL(body["url"]).getOrThrow()
             val orgnummer = validateOrgNummer(body["orgnummer"]).getOrThrow()
-
             val verksemd = verksemdDAO.getVerksemdByOrgnummer(orgnummer).getOrNull()
-            val verksemdId =
-                if (verksemd != null) verksemd.id
-                else {
-                  logger.info("lagrar ny verksemd med orgnummer $orgnummer")
-                  val nyVerksemd = verksemdService.getVerksemdData(orgnummer).getOrThrow()
-                  verksemdDAO.createVerksemd(nyVerksemd).getOrThrow()
-                }
+            val verksemdId = verksemd?.id
 
             loeysingDAO.createLoeysing(namn, url, orgnummer, verksemdId).also {
               logger.info("lagra løysing ($url, $orgnummer)")
