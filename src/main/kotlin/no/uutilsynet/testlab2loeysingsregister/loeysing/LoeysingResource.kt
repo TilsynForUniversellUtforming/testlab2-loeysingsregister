@@ -3,6 +3,7 @@ package no.uutilsynet.testlab2loeysingsregister.loeysing
 import java.net.URI
 import java.time.Instant
 import no.uutilsynet.testlab2loeysingsregister.*
+import no.uutilsynet.testlab2loeysingsregister.verksemd.Verksemd
 import no.uutilsynet.testlab2loeysingsregister.verksemd.VerksemdDAO
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -60,25 +61,7 @@ class LoeysingResource(val loeysingDAO: LoeysingDAO, val verksemdDAO: VerksemdDA
       @RequestParam search: String?,
       @RequestParam atTime: String?
   ): ResponseEntity<List<Loeysing>> {
-    return runCatching {
-          val instant = atTime?.let { validateInstant(atTime).getOrThrow() } ?: Instant.now()
-          when {
-            ids != null && search?.isNotBlank() == true -> {
-              val idList = validateIdList(ids).getOrThrow()
-              loeysingDAO.findLoeysingar(search, instant).filter { it.id in idList }
-            }
-            search?.isNotBlank() == true -> {
-              loeysingDAO.findLoeysingar(search, instant)
-            }
-            ids != null -> {
-              val idList = validateIdList(ids).getOrThrow()
-              loeysingDAO.getLoeysingList(idList, instant)
-            }
-            else -> {
-              loeysingDAO.getLoeysingList(atTime = instant)
-            }
-          }
-        }
+    return getManyBase(atTime, ids, search)
         .fold(
             { ResponseEntity.ok(it) },
             { exception ->
@@ -88,6 +71,26 @@ class LoeysingResource(val loeysingDAO: LoeysingDAO, val verksemdDAO: VerksemdDA
                 else -> ResponseEntity.internalServerError().build()
               }
             })
+  }
+
+  private fun getManyBase(atTime: String?, ids: String?, search: String?) = runCatching {
+    val instant = atTime?.let { validateInstant(atTime).getOrThrow() } ?: Instant.now()
+    when {
+      ids != null && search?.isNotBlank() == true -> {
+        val idList = validateIdList(ids).getOrThrow()
+        loeysingDAO.findLoeysingar(search, instant).filter { it.id in idList }
+      }
+      search?.isNotBlank() == true -> {
+        loeysingDAO.findLoeysingar(search, instant)
+      }
+      ids != null -> {
+        val idList = validateIdList(ids).getOrThrow()
+        loeysingDAO.getLoeysingList(idList, instant)
+      }
+      else -> {
+        loeysingDAO.getLoeysingList(atTime = instant)
+      }
+    }
   }
 
   @PutMapping
@@ -123,4 +126,35 @@ class LoeysingResource(val loeysingDAO: LoeysingDAO, val verksemdDAO: VerksemdDA
                 logger.error("Feila då vi skulle slette løysing med id ${id}", exception)
                 ResponseEntity.internalServerError().build()
               })
+
+  @GetMapping("/expanded")
+  fun getManyExpanded(
+      @RequestParam ids: String?,
+      @RequestParam search: String?,
+      @RequestParam atTime: String?
+  ): ResponseEntity<List<LoeysingExpanded>> {
+    val loeysingList =
+        getManyBase(atTime, ids, search).mapCatching { loeysingar ->
+          loeysingar.map { loeysing -> toLoeysingExpanded(loeysing) }
+        }
+
+    return loeysingList.fold(
+        { ResponseEntity.ok(it) },
+        { exception ->
+          logger.error("Feila då vi skulle hente løysingar", exception)
+          when (exception) {
+            is IllegalArgumentException -> ResponseEntity.badRequest().build()
+            else -> ResponseEntity.internalServerError().build()
+          }
+        })
+  }
+
+  private fun toLoeysingExpanded(loeysing: Loeysing) =
+      LoeysingExpanded(loeysing.id, loeysing.namn, loeysing.url, getVerksemd(loeysing))
+
+  private fun getVerksemd(loeysing: Loeysing): Verksemd? {
+    return loeysing.verksemdId?.let { verksemdId ->
+      return verksemdDAO.getVerksemd(verksemdId).getOrNull()
+    }
+  }
 }
