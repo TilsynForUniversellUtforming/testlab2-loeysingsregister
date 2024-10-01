@@ -127,7 +127,7 @@ class LoeysingResource(val loeysingDAO: LoeysingDAO, val verksemdDAO: VerksemdDA
                 ResponseEntity.internalServerError().build()
               })
 
-  @GetMapping("/expanded")
+  @RequestMapping("/expanded", method = [RequestMethod.GET, RequestMethod.POST])
   fun getManyExpanded(
       @RequestParam ids: String?,
       @RequestParam search: String?,
