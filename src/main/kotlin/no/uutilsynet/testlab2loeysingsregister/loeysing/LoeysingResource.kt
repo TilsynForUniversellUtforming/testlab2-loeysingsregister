@@ -55,7 +55,7 @@ class LoeysingResource(val loeysingDAO: LoeysingDAO, val verksemdDAO: VerksemdDA
         ?: ResponseEntity.notFound().build()
   }
 
-  @RequestMapping("/expanded", method = [RequestMethod.GET, RequestMethod.POST])
+  @GetMapping
   fun getMany(
       @RequestParam ids: String?,
       @RequestParam search: String?,
