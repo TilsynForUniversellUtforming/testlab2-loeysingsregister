@@ -3,6 +3,7 @@ package no.uutilsynet.testlab2loeysingsregister.verksemd
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.web.client.RestTemplateBuilder
 
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -31,7 +32,8 @@ class VerksemdServiceTest() {
   }
 }
 
-class TestVerksemdService : VerksemdService(BrregRegisterProperties("http://localhost:8080")) {
+class TestVerksemdService :
+    VerksemdService(BrregRegisterProperties("http://localhost:8080"), RestTemplateBuilder()) {
   override fun getBrregData(orgnummer: String): Result<BrregVerksemd> {
     if (orgnummer != "991825827")
         return Result.failure(Exception("Fant ikkje verksemd med orgnummer $orgnummer"))

@@ -74,7 +74,7 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
   fun getLoeysingList(idList: List<Int>? = null, atTime: Instant = Instant.now()): List<Loeysing> =
       getPartials(idList, atTime)
           .filter { it.aktiv!! }
-          .map { Loeysing(it.original, it.namn!!, URL(it.url!!), it.orgnummer!!, it.verksemdId) }
+          .map { Loeysing(it.original, it.namn!!, URI(it.url!!).toURL(), it.orgnummer!!, it.verksemdId) }
 
   @Transactional
   fun findLoeysingar(searchTerm: String, atTime: Instant = Instant.now()): List<Loeysing> {

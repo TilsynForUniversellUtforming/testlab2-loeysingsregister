@@ -2,11 +2,15 @@ package no.uutilsynet.testlab2loeysingsregister.verksemd
 
 import org.slf4j.LoggerFactory
 import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.boot.web.client.RestTemplateBuilder
 import org.springframework.stereotype.Component
-import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.client.RestClient
 
 @Component
-class VerksemdService(val properties: BrregRegisterProperties) {
+class VerksemdService(
+    val properties: BrregRegisterProperties,
+    val restTemplateBuilder: RestTemplateBuilder
+) {
 
   val logger = LoggerFactory.getLogger(VerksemdService::class.java)
 
@@ -25,9 +29,11 @@ class VerksemdService(val properties: BrregRegisterProperties) {
 
   fun getBrregData(orgnummer: String): Result<BrregVerksemd> {
     val url = "${properties.url}/$orgnummer"
+    val restTemplate = restTemplateBuilder.build()
+    val restClient = RestClient.builder(restTemplate).build()
 
     val result = runCatching {
-      WebClient.create().get().uri(url).retrieve().bodyToMono(BrregVerksemd::class.java).block()
+      restClient.get().uri(url).retrieve().body(BrregVerksemd::class.java)
           ?: throw Exception("Fant ikkje verksemd med orgnummer $orgnummer")
     }
 
