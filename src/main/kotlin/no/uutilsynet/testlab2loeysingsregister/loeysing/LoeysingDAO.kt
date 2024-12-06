@@ -74,9 +74,8 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
   fun getLoeysingList(idList: List<Int>? = null, atTime: Instant = Instant.now()): List<Loeysing> =
       getPartials(idList, atTime)
           .filter { it.aktiv!! }
-          .map { Loeysing(it.original, it.namn!!, URL(it.url!!), it.orgnummer!!, it.verksemdId) }
+          .map { Loeysing(it.original, it.namn!!, URI(it.url!!).toURL(), it.orgnummer!!, it.verksemdId) }
 
-  @Transactional
   fun findLoeysingar(searchTerm: String, atTime: Instant = Instant.now()): List<Loeysing> {
     val search = "%$searchTerm%"
     val ids =
@@ -87,6 +86,29 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
             where lower(namn) like lower(:search)
             or lower(url) like lower(:search)
             or orgnummer like :search
+        """
+                .trimIndent(),
+            mapOf("search" to search),
+            Int::class.java)
+    return if (ids.isEmpty()) emptyList() else getLoeysingList(ids, atTime)
+  }
+
+  fun findLoeysingarByVerksemd(
+      searchTerm: String,
+      atTime: Instant = Instant.now()
+  ): List<Loeysing> {
+    val search = "%$searchTerm%"
+    val ids =
+        jdbcTemplate.queryForList(
+            """
+            select distinct original
+            from loeysing
+            where verksemd_id in (
+                select id
+                from verksemd
+                where lower(namn) like lower(:search)
+                or lower(organisasjonsnummer) like lower(:search)
+            )
         """
                 .trimIndent(),
             mapOf("search" to search),
