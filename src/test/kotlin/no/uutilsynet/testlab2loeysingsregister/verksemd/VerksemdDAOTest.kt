@@ -39,6 +39,8 @@ class VerksemdDAOTest(@Autowired val verksemdDAO: VerksemdDAO) {
     val response = verksemdDAO.createVerksemd(nyVerksemd)
 
     verksemdId = response.getOrThrow()
+
+    assertThat(verksemdId).isGreaterThan(0)
   }
 
   @Test
@@ -54,16 +56,14 @@ class VerksemdDAOTest(@Autowired val verksemdDAO: VerksemdDAO) {
   @Test
   @Order(3)
   fun updateVerksemd() {
-    val gamalVerksemd =
-        verksemdDAO.getVerksemd(verksemdId).getOrThrow()
-            ?: throw IllegalStateException("Verksemden finst ikkje")
+    val gamalVerksemd = verksemdDAO.getVerksemd(verksemdId).getOrThrow()
     val oppdatertVerksemd = gamalVerksemd.copy(namn = "Oppdatert verksemd")
     val nyId = verksemdDAO.updateVerksemd(oppdatertVerksemd).getOrThrow()
 
     val hentaOppdatering = verksemdDAO.getVerksemd(nyId).getOrThrow()
     val gamalVersjon = verksemdDAO.getVerksemd(verksemdId, originalTimeStamp).getOrThrow()
 
-    assertEquals(gamalVerksemd.organisasjonsnummer, hentaOppdatering?.organisasjonsnummer)
+    assertEquals(gamalVerksemd.organisasjonsnummer, hentaOppdatering.organisasjonsnummer)
     assertThat(hentaOppdatering.tidspunkt).isAfter(originalTimeStamp)
     assertThat(hentaOppdatering.original).isEqualTo(verksemdId)
     verksemdId = nyId
@@ -76,7 +76,7 @@ class VerksemdDAOTest(@Autowired val verksemdDAO: VerksemdDAO) {
 
     val filtrertVerksemder = verksemder.filter { it.id == verksemdId }
     assertThat(filtrertVerksemder).hasSize(1)
-    assertThat(filtrertVerksemder.get(0).namn).isEqualTo("Oppdatert verksemd")
+    assertThat(filtrertVerksemder[0].namn).isEqualTo("Oppdatert verksemd")
   }
 
   @Test
@@ -86,7 +86,7 @@ class VerksemdDAOTest(@Autowired val verksemdDAO: VerksemdDAO) {
     assertThat(result).isGreaterThan(0)
     val slettaVerksemd = verksemdDAO.getVerksemdByOrgnummer(orgnummer).getOrThrow()
 
-    val slettaTidspunkt = slettaVerksemd.tidspunkt ?: Instant.now()
+    val slettaTidspunkt = slettaVerksemd.tidspunkt
     val gamalVersjon = verksemdDAO.getVerksemd(verksemdId).getOrThrow()
     assertThat(slettaVerksemd.aktiv).isEqualTo(false)
     assertThat(gamalVersjon.aktiv).isEqualTo(true)
@@ -99,6 +99,6 @@ class VerksemdDAOTest(@Autowired val verksemdDAO: VerksemdDAO) {
 
     val gamalListe = verksemdDAO.getVerksemder(slettaTidspunkt)
 
-    assertThat(gamalListe).hasSize(1)
+    assertThat(gamalListe.map { it.id }).contains(verksemdId)
   }
 }
