@@ -11,13 +11,13 @@ import org.junit.jupiter.api.*
 import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.mock.mockito.MockBean
+import org.springframework.boot.test.mock.mockito.SpyBean
 
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class LoeysingDAOTest(@Autowired val loeysingDAO: LoeysingDAO) {
 
-  @MockBean lateinit var verksemdDAO: VerksemdDAO
+  @SpyBean lateinit var verksemdDAO: VerksemdDAO
 
   val idsToBeDeleted = mutableListOf<Int>()
 
@@ -181,6 +181,24 @@ class LoeysingDAOTest(@Autowired val loeysingDAO: LoeysingDAO) {
 
       assertThat(result).isEmpty()
     }
+
+    @Test
+    @DisplayName("når man søker etter ei løysing med delar av verksemdsnavnet, så skal vi få treff")
+    fun soekEtterVerksemd() {
+      val name = UUID.randomUUID().toString()
+      val url = "https://www.$name.com"
+      val verksemd = createVerksemd()
+      val id = createLoeysing(name, url, verksemd.organisasjonsnummer, verksemd.id)
+      val loeysing = loeysingDAO.getLoeysing(id)!!
+
+      val result = loeysingDAO.findLoeysingarByVerksemd(verksemd.namn)
+
+      assertThat(result).contains(loeysing)
+
+      val result2 = loeysingDAO.findLoeysingarByVerksemd(verksemd.organisasjonsnummer)
+
+      assertThat(result2).contains(loeysing)
+    }
   }
 
   /** Lager ei ny løysing med ei oppdatering. */
@@ -202,6 +220,27 @@ class LoeysingDAOTest(@Autowired val loeysingDAO: LoeysingDAO) {
     val loeysing = loeysingDAO.getLoeysing(id)!!
     loeysingDAO.update(loeysing.copy(namn = name))
     return id
+  }
+
+  private fun createVerksemd(): Verksemd {
+    val nyVerksemd =
+        NyVerksemd(
+            namn = "Testverksemd",
+            organisasjonsnummer = generateOrgnummer(),
+            institusjonellSektorKode = InstitusjonellSektorKode("123", "Testsektor"),
+            naeringskode = Naeringskode("123", "Testnaering"), // "123", "Testnaering
+            organisasjonsform = Organisasjonsform("123", "Testform"),
+            fylke = Fylke("46", "Testfylke"),
+            kommune = Kommune("123", "Testkommune"),
+            postadresse = Postadresse("123", "Teststad"),
+            talTilsette = 123,
+            forvaltningsnivaa = "Testnivå",
+            tenesteromraade = "Testområde",
+            aktiv = true,
+            original = 1)
+
+    val id = verksemdDAO.createVerksemd(nyVerksemd).getOrThrow()
+    return verksemdDAO.getVerksemd(id).getOrThrow()
   }
 
   private fun generateOrgnummer(): String {
