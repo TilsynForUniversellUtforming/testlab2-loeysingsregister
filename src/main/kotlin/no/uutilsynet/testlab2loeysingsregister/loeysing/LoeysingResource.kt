@@ -73,6 +73,35 @@ class LoeysingResource(val loeysingDAO: LoeysingDAO, val verksemdDAO: VerksemdDA
             })
   }
 
+  @GetMapping("verksemd")
+  fun getManyByVerksemd(
+      @RequestParam search: String?,
+      @RequestParam atTime: String?
+  ): ResponseEntity<List<Loeysing>> {
+    return runCatching { getManyByVerksemdBase(search, atTime) }
+        .fold(
+            { ResponseEntity.ok(it) },
+            { exception ->
+              logger.error("Feila då vi skulle hente løysingar", exception)
+              when (exception) {
+                is IllegalArgumentException -> ResponseEntity.badRequest().build()
+                else -> ResponseEntity.internalServerError().build()
+              }
+            })
+  }
+
+  private fun getManyByVerksemdBase(search: String?, atTime: String?): List<Loeysing> {
+    val instant = atTime?.let { validateInstant(atTime).getOrThrow() } ?: Instant.now()
+    return when {
+      search?.isNotBlank() == true -> {
+        loeysingDAO.findLoeysingarByVerksemd(search, instant)
+      }
+      else -> {
+        loeysingDAO.getLoeysingList(atTime = instant)
+      }
+    }
+  }
+
   private fun getManyBase(atTime: String?, ids: String?, search: String?) = runCatching {
     val instant = atTime?.let { validateInstant(atTime).getOrThrow() } ?: Instant.now()
     when {
