@@ -61,7 +61,7 @@ class VerksemdDAOTest(@Autowired val verksemdDAO: VerksemdDAO) {
     val nyId = verksemdDAO.updateVerksemd(oppdatertVerksemd).getOrThrow()
 
     val hentaOppdatering = verksemdDAO.getVerksemd(nyId).getOrThrow()
-    val gamalVersjon = verksemdDAO.getVerksemd(verksemdId, originalTimeStamp).getOrThrow()
+    verksemdDAO.getVerksemd(verksemdId, originalTimeStamp).getOrThrow()
 
     assertEquals(gamalVerksemd.organisasjonsnummer, hentaOppdatering.organisasjonsnummer)
     assertThat(hentaOppdatering.tidspunkt).isAfter(originalTimeStamp)
