@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=testlab2_loeysingsregister
+    username:
+    password:
+    hikari:
+        schema: testlab2_loeysingsregister
+  sql:
+    init:
+      platform: postgresql
+  flyway:
+    schemas: testlab2_loeysingsregister
+  config:
+    import: optional:dev.yml
+brreg:
+  url: https://data.brreg.no/enhetsregisteret/api/enheter
