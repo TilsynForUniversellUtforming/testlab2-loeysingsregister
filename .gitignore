@@ -25,3 +25,4 @@ hs_err_pid*
 /.idea/
 testlab2loeysingsregister.iml
 src/main/resources/dev.properties
+/src/main/resources/dev.yml
