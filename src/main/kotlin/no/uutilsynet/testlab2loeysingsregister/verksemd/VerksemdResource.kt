@@ -46,8 +46,8 @@ class VerksemdResource(val verksemdDAO: VerksemdDAO, val verksemdService: Verkse
         .createVerksemd(verksemd)
         .also { logger.info("lagra verksemd (${verksemd.namn}, ${verksemd.organisasjonsnummer})") }
         .let {
-          val verksemd = verksemdDAO.getVerksemd(it.getOrThrow()).getOrThrow()
-          return ResponseEntity.ok(verksemd)
+          val cratedVerksemd = verksemdDAO.getVerksemd(it.getOrThrow()).getOrThrow()
+          return ResponseEntity.ok(cratedVerksemd)
         }
   }
 
@@ -64,7 +64,7 @@ class VerksemdResource(val verksemdDAO: VerksemdDAO, val verksemdService: Verkse
             })
   }
 
-  @DeleteMapping
+  @DeleteMapping("/{id}")
   fun deleteVerksemd(@PathVariable id: Int): ResponseEntity<Int> {
     verksemdDAO
         .deleteVerksemd(id)

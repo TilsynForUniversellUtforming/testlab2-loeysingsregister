@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.1.2</version>
+        <version>3.4.1</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>no.uutilsynet</groupId>
@@ -14,8 +14,7 @@
     <name>testlab2loeysingsregister</name>
     <description>testlab2loeysingsregister</description>
     <properties>
-        <java.version>17</java.version>
-        <kotlin.version>1.8.0</kotlin.version>
+        <java.version>21</java.version>
         <spotless.version>2.40.0</spotless.version>
         <docker.image.prefix>acrddtprod.azurecr.io</docker.image.prefix>
     </properties>
@@ -33,10 +32,6 @@
             <artifactId>jackson-module-kotlin</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-core</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-reflect</artifactId>
         </dependency>
@@ -46,8 +41,13 @@
         </dependency>
 
         <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
+            <version>42.7.2</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
@@ -109,6 +109,9 @@
                         <image>${docker.image.prefix}/testlab2-loeysingsregister:${git.commit.id}</image>
                         <tags>latest</tags>
                     </to>
+                    <from>
+                        <image>eclipse-temurin:21</image>
+                    </from>
                     <container>
                         <ports>
                             <port>8080</port>
