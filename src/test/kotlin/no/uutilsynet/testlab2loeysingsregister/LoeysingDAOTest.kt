@@ -11,13 +11,13 @@ import org.junit.jupiter.api.*
 import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.mock.mockito.SpyBean
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class LoeysingDAOTest(@Autowired val loeysingDAO: LoeysingDAO) {
 
-  @SpyBean lateinit var verksemdDAO: VerksemdDAO
+  @MockitoSpyBean lateinit var verksemdDAO: VerksemdDAO
 
   val idsToBeDeleted = mutableListOf<Int>()
 
