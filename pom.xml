@@ -16,7 +16,7 @@
     <properties>
         <java.version>21</java.version>
         <spotless.version>2.40.0</spotless.version>
-        <docker.image.prefix>acrddtprod.azurecr.io</docker.image.prefix>
+        <docker.image.prefix>localhost</docker.image.prefix>
     </properties>
     <dependencies>
         <dependency>
@@ -106,8 +106,8 @@
                 <configuration>
                     <to>
                         <!--suppress UnresolvedMavenProperty -->
-                        <image>${docker.image.prefix}/testlab2-loeysingsregister:${git.commit.id}</image>
-                        <tags>latest</tags>
+                        <image>${docker.image.prefix}/testlab2-loeysingsregister</image>
+                        <tags>${git.commit.id}</tags>
                     </to>
                     <from>
                         <image>eclipse-temurin:21</image>
@@ -116,6 +116,7 @@
                         <ports>
                             <port>8080</port>
                         </ports>
+                        <user>nobody</user>
                     </container>
                 </configuration>
             </plugin>
