@@ -41,7 +41,7 @@ jobs:
           password: ${{ secrets.ACR_PASSWORD }}
       - name: Build, test and push image
         if: github.ref == 'refs/heads/main'
-        run: mvn --batch-mode --update-snapshots verify jib:build
+        run: mvn -Ddocker.image.prefix=${{ secrets.ACR_ENDPOINT }} --batch-mode --update-snapshots verify jib:build
         env:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/postgres
           SPRING_DATASOURCE_USERNAME: postgres
