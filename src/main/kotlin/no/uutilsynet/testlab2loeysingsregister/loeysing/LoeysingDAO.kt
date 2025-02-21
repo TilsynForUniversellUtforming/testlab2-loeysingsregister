@@ -79,7 +79,7 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
           }
 
   fun findLoeysingar(searchTerm: String, atTime: Instant = Instant.now()): List<Loeysing> {
-    val search = "%$searchTerm%"
+    val search = "$searchTerm%"
     val ids =
         jdbcTemplate.queryForList(
             """
@@ -91,7 +91,7 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
         """
                 .trimIndent(),
             mapOf("search" to search),
-            Int::class.java)
+            Int::class.java).toList()
     return if (ids.isEmpty()) emptyList() else getLoeysingList(ids, atTime)
   }
 
@@ -99,7 +99,7 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
       searchTerm: String,
       atTime: Instant = Instant.now()
   ): List<Loeysing> {
-    val search = "%$searchTerm%"
+    val search = "$searchTerm%"
     val ids =
         jdbcTemplate.queryForList(
             """
@@ -114,7 +114,7 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
         """
                 .trimIndent(),
             mapOf("search" to search),
-            Int::class.java)
+            Int::class.java).toList()
     return if (ids.isEmpty()) emptyList() else getLoeysingList(ids, atTime)
   }
 
