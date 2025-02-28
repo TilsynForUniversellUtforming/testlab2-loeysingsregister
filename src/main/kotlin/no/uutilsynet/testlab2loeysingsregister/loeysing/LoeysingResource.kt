@@ -1,6 +1,5 @@
 package no.uutilsynet.testlab2loeysingsregister.loeysing
 
-import java.net.URI
 import java.time.Instant
 import no.uutilsynet.testlab2loeysingsregister.*
 import no.uutilsynet.testlab2loeysingsregister.verksemd.Verksemd
@@ -11,7 +10,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 
-fun locationForId(id: Int): URI = URI("/v1/loeysing/${id}")
+private const val FEILA_DAA_VI_SKULLE_HENTE_LOEYSINGAR = "Feila då vi skulle hente løysingar"
 
 @RestController
 @RequestMapping("v1/loeysing")
@@ -65,7 +64,7 @@ class LoeysingResource(val loeysingDAO: LoeysingDAO, val verksemdDAO: VerksemdDA
         .fold(
             { ResponseEntity.ok(it) },
             { exception ->
-              logger.error("Feila då vi skulle hente løysingar", exception)
+              logger.error(FEILA_DAA_VI_SKULLE_HENTE_LOEYSINGAR, exception)
               when (exception) {
                 is IllegalArgumentException -> ResponseEntity.badRequest().build()
                 else -> ResponseEntity.internalServerError().build()
@@ -82,7 +81,7 @@ class LoeysingResource(val loeysingDAO: LoeysingDAO, val verksemdDAO: VerksemdDA
         .fold(
             { ResponseEntity.ok(it) },
             { exception ->
-              logger.error("Feila då vi skulle hente løysingar", exception)
+              logger.error(FEILA_DAA_VI_SKULLE_HENTE_LOEYSINGAR, exception)
               when (exception) {
                 is IllegalArgumentException -> ResponseEntity.badRequest().build()
                 else -> ResponseEntity.internalServerError().build()
@@ -103,24 +102,21 @@ class LoeysingResource(val loeysingDAO: LoeysingDAO, val verksemdDAO: VerksemdDA
   }
 
   private fun getManyBase(atTime: String?, ids: String?, search: String?) = runCatching {
-    val instant = atTime?.let { validateInstant(atTime).getOrThrow() } ?: Instant.now()
-    when {
-      ids != null && search?.isNotBlank() == true -> {
-        val idList = validateIdList(ids).getOrThrow()
-        loeysingDAO.findLoeysingar(search, instant).filter { it.id in idList }
-      }
-      search?.isNotBlank() == true -> {
-        loeysingDAO.findLoeysingar(search, instant)
-      }
-      ids != null -> {
-        val idList = validateIdList(ids).getOrThrow()
-        loeysingDAO.getLoeysingList(idList, instant)
-      }
-      else -> {
-        loeysingDAO.getLoeysingList(atTime = instant)
-      }
+    val instant = getValidatedTimeOrInstantNow(atTime)
+    val validatedIds = ids?.let { validateIdList(ids).getOrThrow() }
+    if (search?.isNotBlank() == true) {
+      loeysingDAO.findLoeysingar(search, instant).filter { filterLoeysingar(validatedIds, it.id) }
+    } else {
+      loeysingDAO.getLoeysingList(validatedIds, atTime = instant)
     }
   }
+
+  private fun filterLoeysingar(ids: List<Int>?, id: Int): Boolean {
+    return ids?.contains(id) ?: true
+  }
+
+  private fun getValidatedTimeOrInstantNow(atTime: String?): Instant =
+      atTime?.let { validateInstant(atTime).getOrThrow() } ?: Instant.now()
 
   @PutMapping
   fun update(@RequestBody loeysing: Loeysing): ResponseEntity<Unit> =
@@ -170,12 +166,23 @@ class LoeysingResource(val loeysingDAO: LoeysingDAO, val verksemdDAO: VerksemdDA
     return loeysingList.fold(
         { ResponseEntity.ok(it) },
         { exception ->
-          logger.error("Feila då vi skulle hente løysingar", exception)
+          logger.error(FEILA_DAA_VI_SKULLE_HENTE_LOEYSINGAR, exception)
           when (exception) {
             is IllegalArgumentException -> ResponseEntity.badRequest().build()
             else -> ResponseEntity.internalServerError().build()
           }
         })
+  }
+
+  @RequestMapping("/updatemany", method = [RequestMethod.PUT])
+  fun updateMany(ids: List<Int>) {
+    ids.forEach { id ->
+      loeysingDAO.getLoeysing(id)?.let {
+        verksemdDAO.getVerksemdByOrgnummer(it.orgnummer).onSuccess { verksemd ->
+          loeysingDAO.update(it.copy(verksemdId = verksemd.id))
+        }
+      }
+    }
   }
 
   private fun toLoeysingExpanded(loeysing: Loeysing) =
