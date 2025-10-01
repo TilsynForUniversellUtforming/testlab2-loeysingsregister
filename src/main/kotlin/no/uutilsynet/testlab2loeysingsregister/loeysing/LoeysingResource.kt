@@ -189,8 +189,10 @@ class LoeysingResource(val loeysingDAO: LoeysingDAO, val verksemdDAO: VerksemdDA
       LoeysingExpanded(loeysing.id, loeysing.namn, loeysing.url, getVerksemd(loeysing))
 
   private fun getVerksemd(loeysing: Loeysing): Verksemd? {
-    return loeysing.verksemdId?.let { verksemdId ->
-      return verksemdDAO.getVerksemd(verksemdId).getOrNull()
-    }
+      return if(loeysing.verksemdId==null) {
+          verksemdDAO.getVerksemdByOrgnummer(loeysing.orgnummer).getOrNull()
+      } else {
+          verksemdDAO.getVerksemd(loeysing.verksemdId).getOrNull()
+      }
   }
 }
