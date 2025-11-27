@@ -127,7 +127,7 @@ class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
                 "organisasjonsnummer" to organisasjonsnummer,
                 "atTime" to Timestamp.from(atTime))) { rs, _ ->
               verksemdRowmapper(rs)
-            }
+            }.toList()
 
     if (verksemd.isNotEmpty()) {
       return verksemd.first().let { Result.success(it) }
@@ -271,6 +271,10 @@ class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
                 and
                 (lower(namn) like lower(:search)
                 or lower(organisasjonsnummer) like lower(:search))
+                and id not in (
+                select original
+                from testlab2_loeysingsregister.verksemd
+                )
                 order by tidspunkt desc
             """
             .trimIndent()
