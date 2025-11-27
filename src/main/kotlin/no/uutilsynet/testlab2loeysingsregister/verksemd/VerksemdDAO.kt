@@ -121,13 +121,15 @@ class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
             .trimIndent()
 
     val verksemd =
-        jdbcTemplate.query(
-            sql,
-            mapOf(
-                "organisasjonsnummer" to organisasjonsnummer,
-                "atTime" to Timestamp.from(atTime))) { rs, _ ->
-              verksemdRowmapper(rs)
-            }.toList()
+        jdbcTemplate
+            .query(
+                sql,
+                mapOf(
+                    "organisasjonsnummer" to organisasjonsnummer,
+                    "atTime" to Timestamp.from(atTime))) { rs, _ ->
+                  verksemdRowmapper(rs)
+                }
+            .toList()
 
     if (verksemd.isNotEmpty()) {
       return verksemd.first().let { Result.success(it) }
