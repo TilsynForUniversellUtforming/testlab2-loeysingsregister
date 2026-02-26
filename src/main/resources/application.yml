@@ -8,9 +8,8 @@ spring:
   sql:
     init:
       platform: postgresql
-  flyway:
-    schemas: testlab2_loeysingsregister
   config:
     import: optional:dev.yml
+  flyway:
 brreg:
   url: https://data.brreg.no/enhetsregisteret/api/enheter

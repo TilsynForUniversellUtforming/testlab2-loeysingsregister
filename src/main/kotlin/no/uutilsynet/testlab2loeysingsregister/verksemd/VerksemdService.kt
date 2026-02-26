@@ -1,9 +1,10 @@
 package no.uutilsynet.testlab2loeysingsregister.verksemd
 
+import java.util.NoSuchElementException
 import org.slf4j.LoggerFactory
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.stereotype.Component
-import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.client.RestClient
 
 @Component
 class VerksemdService(val properties: BrregRegisterProperties) {
@@ -27,8 +28,8 @@ class VerksemdService(val properties: BrregRegisterProperties) {
     val url = "${properties.url}/$orgnummer"
 
     val result = runCatching {
-      WebClient.create().get().uri(url).retrieve().bodyToMono(BrregVerksemd::class.java).block()
-          ?: throw Exception("Fant ikkje verksemd med orgnummer $orgnummer")
+      RestClient.create(url).get().retrieve().body(BrregVerksemd::class.java)
+          ?: throw NoSuchElementException("Fant ikkje verksemd med orgnummer $orgnummer")
     }
 
     result.fold(
