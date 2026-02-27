@@ -26,21 +26,21 @@ class VerksemdEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) var id: Int,
 ) {
   @Column(name = "institusjonell_sektorkode", nullable = false, length = Integer.MAX_VALUE)
-  open var institusjonellSektorkode: String? = null
+  var institusjonellSektorkode: String? = null
 
   @Column(
       name = "institusjonell_sektorkode_beskrivelse", nullable = false, length = Integer.MAX_VALUE)
-  open var institusjonellSektorkodeBeskrivelse: String? = null
+  var institusjonellSektorkodeBeskrivelse: String? = null
 
   @Column(name = "naeringskode_beskrivelse", nullable = false, length = Integer.MAX_VALUE)
-  open var naeringskodeBeskrivelse: String? = null
+  var naeringskodeBeskrivelse: String? = null
 
-  @Column(name = "fylkesnummer", nullable = false, length = 4) open var fylkesnummer: String? = null
+  @Column(name = "fylkesnummer", nullable = false, length = 4) var fylkesnummer: String? = null
 
   @Column(name = "kommune", nullable = false, length = Integer.MAX_VALUE)
-  open var kommune: String? = null
+  var kommune: String? = null
 
-  @Column(name = "postnummer", length = 4) open var postnummer: String? = null
+  @Column(name = "postnummer", length = 4) var postnummer: String? = null
 
   @Column(name = "poststad", length = Integer.MAX_VALUE) open var poststad: String? = null
 }

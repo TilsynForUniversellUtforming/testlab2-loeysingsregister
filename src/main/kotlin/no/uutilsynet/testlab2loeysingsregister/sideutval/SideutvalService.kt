@@ -21,11 +21,12 @@ class SideutvalService(
   fun getOrCreateSideutval(
       sideutvalLoolkupRequest: SideutvalLookupRequest
   ): Result<List<SideUtvalResponse>> {
+
     return getLoeysingFromNameUrl(sideutvalLoolkupRequest).mapCatching { loeysing ->
-      sideutvalLoolkupRequest.address.map { address ->
+      sideutvalLoolkupRequest.address.map { side ->
         requireNotNull(loeysing.id) { "LoeysingId manglar" }
-        getSideBySideAndLoeysingId(address, loeysing.id!!)
-            .recover { createSideutval(address, loeysing.id!!) }
+        getSideBySideAndLoeysingId(side, loeysing.id!!)
+            .recover { createSideutval(side, loeysing.id!!) }
             .getOrThrow()
             .toSideutvalResponse()
       }
@@ -46,8 +47,9 @@ class SideutvalService(
 
   fun getSideBySideAndLoeysingId(address: String, loeysingId: Int): Result<Sideutval> {
     return runCatching {
-      sideutvalRepository.findBySideAndLoeysingId(address, loeysingId) ?: throw NoSuchElementException(
-          "Fant ingen sideutval for side: $address og loeysingId: $loeysingId")
+      sideutvalRepository.findBySideAndLoeysingId(address, loeysingId)
+          ?: throw NoSuchElementException(
+              "Fant ingen sideutval for side: $address og loeysingId: $loeysingId")
     }
   }
 
@@ -57,20 +59,19 @@ class SideutvalService(
           NoSuchElementException("Fant ingen loeysing for id: $loeysingId")
         }
 
-      println("Loeysing funnet: $loeysing")
     val sideutval =
         Sideutval(
             type = null, loeysing = loeysing, sidetype = Sidetype.NETTSIDE, side = side, id = 0)
 
-      println("Ny sideutval opprettet: ${sideutval.toString()} for side: $side og loeysingId: $loeysingId")
+
+
     return sideutvalRepository.save(sideutval)
   }
 
-    fun getSideutval(request: SideutvalLookupRequest): SideutvalLookupResponse {
-        val loysing = getLoeysingFromNameUrl(request).getOrThrow()
-        requireNotNull(loysing.id)
-        val sideutvalList = getOrCreateSideutval(request).getOrThrow()
-        return SideutvalLookupResponse(loysing.id!!,sideutvalList)
-
-    }
+  fun getSideutval(request: SideutvalLookupRequest): SideutvalLookupResponse {
+    val loysing = getLoeysingFromNameUrl(request).getOrThrow()
+    requireNotNull(loysing.id)
+    val sideutvalList = getOrCreateSideutval(request).getOrThrow()
+    return SideutvalLookupResponse(loysing.id!!, sideutvalList)
+  }
 }

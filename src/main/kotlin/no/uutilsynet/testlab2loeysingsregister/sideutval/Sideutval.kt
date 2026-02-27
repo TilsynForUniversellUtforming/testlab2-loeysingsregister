@@ -19,11 +19,11 @@ import no.uutilsynet.testlab2loeysingsregister.loeysing.LoeysingEntity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "sidetype", discriminatorType = DiscriminatorType.STRING)
 open class Sideutval(
-    @ManyToOne(fetch = FetchType.LAZY) var type: SideutvalType?,
-    @ManyToOne(fetch = FetchType.LAZY) val loeysing: LoeysingEntity,
+    @ManyToOne(fetch = FetchType.LAZY) open var type: SideutvalType?,
+    @ManyToOne(fetch = FetchType.LAZY) open var loeysing: LoeysingEntity,
     @Column(insertable = false, updatable = false)
     @Enumerated(EnumType.STRING)
-    val sidetype: Sidetype,
-    val side: String,
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) var id: Int,
+    open var sidetype: Sidetype,
+    open var side: String,
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) open var id: Int,
 )
