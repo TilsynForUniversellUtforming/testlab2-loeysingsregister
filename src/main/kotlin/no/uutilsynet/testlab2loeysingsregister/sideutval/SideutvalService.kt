@@ -1,6 +1,7 @@
 package no.uutilsynet.testlab2loeysingsregister.sideutval
 
 import java.net.URI
+import java.util.Locale.getDefault
 import no.uutilsynet.testlab2loeysingsregister.loeysing.LoeysingEntity
 import no.uutilsynet.testlab2loeysingsregister.loeysing.LoeysingRepository
 import org.springframework.stereotype.Service
@@ -40,9 +41,11 @@ class SideutvalService(
   fun getLoeysingFromNameUrl(
       sideutvalLookupRequest: SideutvalLookupRequest
   ): Result<LoeysingEntity> = runCatching {
-    loeysingRepository.findByUrl(URI(sideutvalLookupRequest.loeysingNamn).toURL()).firstOrNull()
+    loeysingRepository
+        .findByUrl(URI(sideutvalLookupRequest.loeysingNamn.lowercase(getDefault())).toURL())
+        .firstOrNull()
         ?: throw NoSuchElementException(
-            "Fant ingen loeysing for url: ${sideutvalLookupRequest.loeysingNamn}")
+            "Fant ingen loeysing for url: ${sideutvalLookupRequest.loeysingNamn.lowercase(getDefault())}")
   }
 
   fun getSideBySideAndLoeysingId(address: String, loeysingId: Int): Result<Sideutval> {
@@ -62,8 +65,6 @@ class SideutvalService(
     val sideutval =
         Sideutval(
             type = null, loeysing = loeysing, sidetype = Sidetype.NETTSIDE, side = side, id = 0)
-
-
 
     return sideutvalRepository.save(sideutval)
   }
