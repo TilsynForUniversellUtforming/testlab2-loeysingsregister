@@ -10,13 +10,15 @@ import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.bean.override.mockito.MockitoBean
 
 @SpringBootTest(
     classes = [SideutvalService::class],
     properties =
         ["spring.datasource.url= jdbc:tc:postgresql:16-alpine:///SideutvalServiceTestTest-db"])
-class SideutvalServiceTest() {
+@ActiveProfiles("test")
+class SideutvalServiceTest {
 
   @Autowired lateinit var sideutvalService: SideutvalService
 
