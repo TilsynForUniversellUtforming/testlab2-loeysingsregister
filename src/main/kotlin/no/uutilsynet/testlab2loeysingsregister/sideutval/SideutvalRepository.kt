@@ -6,4 +6,6 @@ interface SideutvalRepository : JpaRepository<Sideutval, Long> {
   fun findSideutvalBySide(side: String): Sideutval?
 
   fun findBySideAndLoeysingId(side: String, loeysingId: Int): Sideutval?
+
+  fun findByLoeysingId(loeysingId: Int): List<Sideutval>
 }

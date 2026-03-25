@@ -13,8 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 
-@SpringBootTest(properties =
-  ["spring.datasource.url= jdbc:tc:postgresql:16-alpine:///SideutvalServiceTestTest-db"])
+@SpringBootTest(
+    properties =
+        ["spring.datasource.url= jdbc:tc:postgresql:16-alpine:///SideutvalServiceTestTest-db"])
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class LoeysingDAOTest(@Autowired val loeysingDAO: LoeysingDAO) {
 
