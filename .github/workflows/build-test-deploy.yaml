@@ -39,6 +39,15 @@ jobs:
           registry: ${{ secrets.ACR_ENDPOINT }}
           username: ${{ secrets.ACR_USERNAME }}
           password: ${{ secrets.ACR_PASSWORD }}
+      - name: Setup github packages
+        uses: s4u/maven-settings-action@v3.0.0
+        with:
+          servers: |
+            [{
+                "id": "github",
+                "username": "${{ secrets.GH_USER }}",
+                "password": "${{ secrets.PAT }}"
+            }]
       - name: Build, test and push image
         if: github.ref == 'refs/heads/main'
         run: mvn -Ddocker.image.prefix=${{ secrets.ACR_ENDPOINT }} --batch-mode --update-snapshots verify jib:build

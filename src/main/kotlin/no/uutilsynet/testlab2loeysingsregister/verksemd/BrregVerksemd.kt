@@ -10,7 +10,7 @@ data class BrregVerksemd(
     val overordnetEnhet: String?,
     val forretningsadresse: Postadresse,
     val institusjonellSektorkode: InstitusjonellSektorKode,
-    val underAvviking: Boolean = false
+    val underAvviking: Boolean? = false
 ) {
 
   data class Postadresse(
