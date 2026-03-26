@@ -9,7 +9,10 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("v1/sideutval")
-class SideutvalResource(val sideutvalService: SideutvalService, val sideutvalRepository: SideutvalRepository) {
+class SideutvalResource(
+    val sideutvalService: SideutvalService,
+    val sideutvalRepository: SideutvalRepository
+) {
 
   @PostMapping("/getOrCreate")
   fun getSideutval(@RequestBody request: SideutvalLookupRequest): SideutvalLookupResponse {
