@@ -175,14 +175,26 @@ class LoeysingResource(val loeysingDAO: LoeysingDAO, val verksemdDAO: VerksemdDA
   }
 
   @RequestMapping("/updatemany", method = [RequestMethod.PUT])
-  fun updateMany(ids: List<Int>) {
+  fun updateMany(@RequestBody ids: List<Int>) {
     ids.forEach { id ->
-      loeysingDAO.getLoeysing(id)?.let {
-        verksemdDAO.getVerksemdByOrgnummer(it.orgnummer).onSuccess { verksemd ->
-          loeysingDAO.update(it.copy(verksemdId = verksemd.id))
+      logger.info("Update $id")
+      getLoeysingHasNotVirksomhet(id)?.let {
+        getVirksomhetByOrgnummer(it).onSuccess { verksemd ->
+          updateLoeysingMedVirksomhet(it, verksemd)
         }
       }
     }
+  }
+
+  private fun getLoeysingHasNotVirksomhet(id: Int): Loeysing? {
+    return loeysingDAO.getLoeysing(id)?.takeIf { it.verksemdId == null }
+  }
+
+  private fun getVirksomhetByOrgnummer(it: Loeysing) =
+      verksemdDAO.getVerksemdByOrgnummer(it.orgnummer)
+
+  private fun updateLoeysingMedVirksomhet(it: Loeysing, verksemd: Verksemd) {
+    loeysingDAO.update(it.copy(verksemdId = verksemd.id))
   }
 
   private fun toLoeysingExpanded(loeysing: Loeysing) =
