@@ -1,5 +1,6 @@
 package no.uutilsynet.testlab2loeysingsregister.verksemd
 
+import no.uutilsynet.testlab2.constants.Virksomhetstype
 import java.time.Instant
 import kotlin.properties.Delegates
 import org.assertj.core.api.Assertions.assertThat
@@ -34,7 +35,8 @@ class VerksemdDAOTest(@Autowired val verksemdDAO: VerksemdDAO) {
             forvaltningsnivaa = "Testnivå",
             tenesteromraade = "Testområde",
             aktiv = true,
-            original = 1)
+            original = 1,
+            virksomhetstype = Virksomhetstype.OFFENTLIG)
 
     val response = verksemdDAO.createVerksemd(nyVerksemd)
 
