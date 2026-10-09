@@ -1,5 +1,6 @@
 package no.uutilsynet.testlab2loeysingsregister.verksemd
 
+import no.uutilsynet.testlab2.constants.Virksomhetstype
 import java.sql.ResultSet
 import java.sql.Timestamp
 import java.time.Instant
@@ -35,7 +36,8 @@ class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
             under_avviking,
             aktiv,
             original,
-            tidspunkt)
+            tidspunkt,
+            virksomhetstype)
             values (:namn,
             :organisasjonsnummer,
             :institusjonell_sektorkode,
@@ -56,7 +58,8 @@ class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
             :under_avviking,
             :aktiv,
             :original,
-            :tidspunkt) 
+            :tidspunkt,
+            :virksomhetstype) 
             returning id         
         """
           .trimIndent()
@@ -70,7 +73,7 @@ class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
           val params = verksemdParamsMap(verksemd, existing)
 
           jdbcTemplate.queryForObject(insertVerksemdSql, params, Int::class.java)
-              ?: throw Exception("Oppretting av verksemd ${verksemd.organisasjonsnummer} feila")
+              ?: error("Oppretting av verksemd ${verksemd.organisasjonsnummer} feila")
         }
         .fold(onSuccess = { id -> Result.success(id) }, onFailure = { e -> Result.failure(e) })
   }
@@ -102,8 +105,7 @@ class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
           verksemdRowmapper(rs)
         }
 
-    return verksemd?.let { Result.success(it) }
-        ?: Result.failure(Exception("Verksemd med id $id finst ikkje"))
+    return verksemd.let { Result.success(it) }
   }
 
   fun getVerksemdByOrgnummer(
@@ -162,7 +164,8 @@ class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
         aktiv = rs.getBoolean("aktiv"),
         original = rs.getInt("original"),
         tidspunkt = rs.getTimestamp("tidspunkt").toInstant(),
-        underAvviking = rs.getBoolean("under_avviking"))
+        underAvviking = rs.getBoolean("under_avviking"),
+        virksomhetstype = Virksomhetstype.valueOf(rs.getString("virksomhetstype")))
   }
 
   fun getVerksemder(atTime: Instant = Instant.now(), aktiv: Boolean = true): List<Verksemd> {
@@ -240,7 +243,8 @@ class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
           "under_avviking" to verksemd.underAvviking,
           "aktiv" to verksemd.aktiv,
           "original" to original,
-          "tidspunkt" to Timestamp.from(Instant.now()))
+          "tidspunkt" to Timestamp.from(Instant.now()),
+          "virksomhetstype" to verksemd.virksomhetstype.name)
 
   fun Verksemd.toNyVerksemd(): NyVerksemd {
     return NyVerksemd(
@@ -258,7 +262,8 @@ class VerksemdDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
         underAvviking = underAvviking,
         aktiv = aktiv,
         original = original,
-        tidspunkt = tidspunkt)
+        tidspunkt = tidspunkt,
+        virksomhetstype = virksomhetstype)
   }
 
   fun findVerksemder(searchTerm: String, atTime: Instant = Instant.now()): List<Verksemd> {

@@ -1,8 +1,10 @@
 package no.uutilsynet.testlab2loeysingsregister
 
+import no.uutilsynet.testlab2.constants.Virksomhetstype
 import java.net.URI
 import java.time.Instant
 import java.util.*
+import java.util.concurrent.ThreadLocalRandom
 import no.uutilsynet.testlab2loeysingsregister.loeysing.Loeysing
 import no.uutilsynet.testlab2loeysingsregister.loeysing.LoeysingDAO
 import no.uutilsynet.testlab2loeysingsregister.verksemd.*
@@ -108,7 +110,8 @@ class LoeysingDAOTest(@Autowired val loeysingDAO: LoeysingDAO) {
 
   @Test
   @DisplayName(
-      "når det finnes ei løysing i databasen, og vi oppdaterer den, så skal vi få den oppdaterte versjonen når vi leser den ut igjen")
+      "når det finnes ei løysing i databasen, og vi oppdaterer den, " +
+              "så skal vi få den oppdaterte versjonen når vi leser den ut igjen")
   fun oppdaterLoeysing() {
     val id = createLoeysing()
     val loeysing = loeysingDAO.getLoeysing(id)!!
@@ -239,7 +242,8 @@ class LoeysingDAOTest(@Autowired val loeysingDAO: LoeysingDAO) {
             forvaltningsnivaa = "Testnivå",
             tenesteromraade = "Testområde",
             aktiv = true,
-            original = 1)
+            original = 1,
+            virksomhetstype = Virksomhetstype.OFFENTLIG)
 
     val id = verksemdDAO.createVerksemd(nyVerksemd).getOrThrow()
     return verksemdDAO.getVerksemd(id).getOrThrow()
@@ -269,7 +273,7 @@ class LoeysingDAOTest(@Autowired val loeysingDAO: LoeysingDAO) {
 
   private fun getTestVerksemd(orgnummer: String): Verksemd {
     return Verksemd(
-        id = Math.random().toInt(),
+        id = ThreadLocalRandom.current().nextDouble().toInt(),
         namn = "Testverksemd",
         organisasjonsnummer = orgnummer,
         institusjonellSektorKode = InstitusjonellSektorKode("123", "Testsektor"),
@@ -282,6 +286,7 @@ class LoeysingDAOTest(@Autowired val loeysingDAO: LoeysingDAO) {
         forvaltningsnivaa = "Testnivå",
         tenesteromraade = "Testområde",
         aktiv = true,
-        original = 1)
+        original = 1,
+        virksomhetstype = Virksomhetstype.OFFENTLIG)
   }
 }

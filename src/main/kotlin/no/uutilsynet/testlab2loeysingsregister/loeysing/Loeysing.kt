@@ -1,5 +1,6 @@
 package no.uutilsynet.testlab2loeysingsregister.loeysing
 
+import no.uutilsynet.testlab2.constants.Loeysingstype
 import java.net.URL
 import kotlin.reflect.full.memberProperties
 
@@ -8,14 +9,16 @@ data class Loeysing(
     val namn: String,
     val url: URL,
     val orgnummer: String,
-    val verksemdId: Int?
+    val verksemdId: Int?,
+    val loeysingstype: Loeysingstype = Loeysingstype.NETT
 )
 
 data class LoeysingDiff(
     val namn: String?,
     val url: URL?,
     val orgnummer: String?,
-    val verksemdId: Int?
+    val verksemdId: Int?,
+    val loeysingstype: Loeysingstype?
 )
 
 fun diff(a: Loeysing, b: Loeysing): LoeysingDiff =
@@ -28,5 +31,6 @@ fun diff(a: Loeysing, b: Loeysing): LoeysingDiff =
               it["namn"] as String?,
               it["url"] as URL?,
               it["orgnummer"] as String?,
-              it["verksemdId"] as Int?)
+              it["verksemdId"] as Int?,
+              it["loeysingstype"] as Loeysingstype?)
         }

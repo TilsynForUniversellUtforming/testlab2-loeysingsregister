@@ -1,5 +1,6 @@
 package no.uutilsynet.testlab2loeysingsregister.loeysing
 
+import no.uutilsynet.testlab2.constants.Loeysingstype
 import java.net.URI
 import java.net.URL
 import java.sql.Timestamp
@@ -24,6 +25,7 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
       val original: Int,
       val tidspunkt: Instant,
       val verksemdId: Int?,
+      val loeysingstype: Loeysingstype?,
   )
 
   private fun combine(a: PartialLoeysing, b: PartialLoeysing): PartialLoeysing {
@@ -35,7 +37,8 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
         latest.aktiv ?: earliest.aktiv,
         latest.original,
         latest.tidspunkt,
-        latest.verksemdId ?: earliest.verksemdId)
+        latest.verksemdId ?: earliest.verksemdId,
+        latest.loeysingstype ?: earliest.loeysingstype)
   }
 
   private fun getPartials(
@@ -54,7 +57,7 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
     val partials =
         jdbcTemplate.query(
             """
-              select namn, url, orgnummer, aktiv, original, tidspunkt, verksemd_id as verksemdId
+              select namn, url, orgnummer, aktiv, original, tidspunkt, verksemd_id as verksemdId, loeysingstype
               from loeysing
               where tidspunkt <= :atTime
               and $idFilter
@@ -93,6 +96,7 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
                     .trimIndent(),
                 mapOf("search" to search),
                 Int::class.java)
+            .filterNotNull()
             .toList()
     return if (ids.isEmpty()) emptyList() else getLoeysingList(ids, atTime)
   }
@@ -118,6 +122,7 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
                     .trimIndent(),
                 mapOf("search" to search),
                 Int::class.java)
+            .filterNotNull()
             .toList()
     return if (ids.isEmpty()) emptyList() else getLoeysingList(ids, atTime)
   }
@@ -153,15 +158,16 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
       logger.debug("Reaktiverer løysing")
       jdbcTemplate.update(
           """
-                insert into loeysing (aktiv, original, tidspunkt, verksemd_id)
-                values (true, :original, :tidspunkt, :verksemd_id)
+                insert into loeysing (aktiv, original, tidspunkt, verksemd_id,loeysingstype)
+                values (true, :original, :tidspunkt, :verksemd_id, :loeysingstype)
             """
               .trimIndent(),
           mapOf(
               "original" to existing.original,
               "tidspunkt" to Timestamp.from(Instant.now()),
-              "verksemd_id" to existing.verksemdId))
-      existing.original
+              "verksemd_id" to existing.verksemdId,
+              "loeysingstype" to existing.loeysingstype))
+        existing.original
     } else {
       logger.debug("Løysing er aktiv")
       existing.original
@@ -172,15 +178,18 @@ class LoeysingDAO(val jdbcTemplate: NamedParameterJdbcTemplate) {
     logger.debug("findLoeysingByURLAndOrgnummer")
     logger.debug("Finner løysing med url: {} og orgnr: {}", url, orgnummer)
     val sammeOrgnummer =
-        jdbcTemplate.queryForList(
-            """
+        jdbcTemplate
+            .queryForList(
+                """
                 select distinct original
                 from loeysing
                 where orgnummer = :orgnummer
             """
-                .trimIndent(),
-            mapOf("orgnummer" to orgnummer),
-            Int::class.java)
+                    .trimIndent(),
+                mapOf("orgnummer" to orgnummer),
+                Int::class.java)
+            .filterNotNull()
+            .toList()
 
     logger.debug("Fant løsyinger: {}", sammeOrgnummer)
     return if (sammeOrgnummer.isEmpty()) {

@@ -1,6 +1,7 @@
 package no.uutilsynet.testlab2loeysingsregister.verksemd
 
 import jakarta.persistence.*
+import no.uutilsynet.testlab2.constants.Virksomhetstype
 import java.time.Instant
 
 @Suppress("LongParameterList")
@@ -23,6 +24,7 @@ class VerksemdEntity(
     val original: Int,
     val tidspunkt: Instant = Instant.now(),
     val underAvviking: Boolean = false,
+    val virksomhetstype: Virksomhetstype,
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) var id: Int,
 ) {
   @Column(name = "institusjonell_sektorkode", nullable = false, length = Integer.MAX_VALUE)

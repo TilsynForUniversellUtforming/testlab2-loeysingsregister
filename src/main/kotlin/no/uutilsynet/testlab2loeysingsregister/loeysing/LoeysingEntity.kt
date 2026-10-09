@@ -5,6 +5,7 @@ import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import no.uutilsynet.testlab2.constants.Loeysingstype
 import java.net.URL
 import java.time.OffsetDateTime
 
@@ -18,5 +19,6 @@ class LoeysingEntity(
     @Column(name = "original") var original: Int? = null,
     @Column(name = "tidspunkt") var tidspunkt: OffsetDateTime? = null,
     @Column(name = "verksemd_id") var verksemdId: Int? = null,
+    @Column(name = "loeysingstype") var loeysingstype: Loeysingstype? = null,
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY) var id: Int? = null
 )

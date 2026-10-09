@@ -1,5 +1,6 @@
 package no.uutilsynet.testlab2loeysingsregister.verksemd
 
+import no.uutilsynet.testlab2.constants.Virksomhetstype
 import java.time.Instant
 
 data class Verksemd(
@@ -18,7 +19,8 @@ data class Verksemd(
     val aktiv: Boolean = true,
     val original: Int,
     val tidspunkt: Instant = Instant.now(),
-    val underAvviking: Boolean = false
+    val underAvviking: Boolean = false,
+    val virksomhetstype: Virksomhetstype,
 )
 
 data class VerksemdDiff(
@@ -33,7 +35,8 @@ data class VerksemdDiff(
     val talTilsette: Int?,
     val forvaltningsnivaa: String?,
     val tenesteromraade: String?,
-    val underAvviking: Boolean = false
+    val underAvviking: Boolean = false,
+    val virksomhetstype: Virksomhetstype,
 )
 
 data class NyVerksemd(
@@ -52,6 +55,7 @@ data class NyVerksemd(
     val aktiv: Boolean = true,
     val original: Int,
     val tidspunkt: Instant = Instant.now(),
+    val virksomhetstype: Virksomhetstype,
 ) {
 
   constructor(
@@ -77,7 +81,8 @@ data class NyVerksemd(
       underAvviking = false,
       aktiv = true,
       original = 0,
-      tidspunkt = Instant.now())
+      tidspunkt = Instant.now(),
+      virksomhetstype = Virksomhetstype.OFFENTLIG)
 }
 
 data class Postadresse(val postnummer: String?, val poststad: String?)

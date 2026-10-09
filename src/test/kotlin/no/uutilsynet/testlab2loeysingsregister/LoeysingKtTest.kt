@@ -19,7 +19,7 @@ class LoeysingKtTest {
     fun toLike() {
       val loeysing =
           Loeysing(1, "UUTilsynet", URI("https://www.uutilsynet.no/").toURL(), "991825827", 1)
-      assertThat(diff(loeysing, loeysing)).isEqualTo(LoeysingDiff(null, null, null, null))
+      assertThat(diff(loeysing, loeysing)).isEqualTo(LoeysingDiff(null, null, null, null,null))
     }
 
     @DisplayName("når vi differ samme løysing med ulikt namn, så skal namnet vere endra")
@@ -28,7 +28,7 @@ class LoeysingKtTest {
       val loeysing =
           Loeysing(1, "UUTilsynet", URI("https://www.uutilsynet.no/").toURL(), "991825827", 1)
       val loeysing2 = Loeysing(1, "TUU", URI("https://www.uutilsynet.no/").toURL(), "991825827", 1)
-      assertThat(diff(loeysing, loeysing2)).isEqualTo(LoeysingDiff("TUU", null, null, null))
+      assertThat(diff(loeysing, loeysing2)).isEqualTo(LoeysingDiff("TUU", null, null, null,null))
     }
 
     @DisplayName("når vi differ samme løysing med ulik url, så skal url vere endra")
@@ -39,7 +39,7 @@ class LoeysingKtTest {
       val loeysing2 =
           Loeysing(1, "UUTilsynet", URI("https://www.digdir.no/").toURL(), "991825827", 1)
       assertThat(diff(loeysing, loeysing2))
-          .isEqualTo(LoeysingDiff(null, URI("https://www.digdir.no/").toURL(), null, null))
+          .isEqualTo(LoeysingDiff(null, URI("https://www.digdir.no/").toURL(), null, null,null))
     }
 
     @DisplayName("når vi differ samme løysing med ulikt orgnummer, så skal orgnummer vere endra")
@@ -49,7 +49,7 @@ class LoeysingKtTest {
           Loeysing(1, "UUTilsynet", URI("https://www.uutilsynet.no/").toURL(), "991825827", 1)
       val loeysing2 =
           Loeysing(1, "UUTilsynet", URI("https://www.uutilsynet.no/").toURL(), "123456785", 1)
-      assertThat(diff(loeysing, loeysing2)).isEqualTo(LoeysingDiff(null, null, "123456785", null))
+      assertThat(diff(loeysing, loeysing2)).isEqualTo(LoeysingDiff(null, null, "123456785", null,null))
     }
 
     @DisplayName("når vi differ samme løysing med ulik virksomhet, så skal virksomhet vere endra")
@@ -59,7 +59,7 @@ class LoeysingKtTest {
           Loeysing(1, "UUTilsynet", URI("https://www.uutilsynet.no/").toURL(), "123456785", 1)
       val loeysing2 =
           Loeysing(1, "UUTilsynet", URI("https://www.uutilsynet.no/").toURL(), "123456785", 2)
-      assertThat(diff(loeysing, loeysing2)).isEqualTo(LoeysingDiff(null, null, null, 2))
+      assertThat(diff(loeysing, loeysing2)).isEqualTo(LoeysingDiff(null, null, null, 2,null))
     }
   }
 }
